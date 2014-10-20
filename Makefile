@@ -21,12 +21,12 @@ SHELL := $(shell which bash)
 APP_NAME := simulator
 
 # Listings of source files for the different executables.
-SOURCES_cpp := $(wildcard src/*.cpp)
+SOURCES_cpp := $(wildcard src/*.cpp) 3rdparty/pugixml/pugixml.cpp
 SOURCES_c:= $(wildcard src/*.c)
-HEADERS := $(wildcard include/*.h)
+HEADERS := $(wildcard include/*.h) $(wildcard 3rdparty/pugixml/*.hpp)
 
 # Generic flags for the C/CPP compiler.
-CFLAGS := 			-pipe -O2 -Wall -D'APP_NAME="$(APP_NAME)"'
+CFLAGS := 			-pipe -O2 -Wall -D'APP_NAME="$(APP_NAME)"' -I3rdparty/pugixml
 CFLAGS_debug := 	-pipe -g -Wall -D'APP_NAME="$(APP_NAME)"' -D_DEBUG
 CXXFLAGS := 		$(CFLAGS)
 CXXFLAGS_debug := 	$(CFLAGS_debug)
