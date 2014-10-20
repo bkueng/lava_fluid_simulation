@@ -1,0 +1,24 @@
+
+*~
+*.o
+*.ko
+*.a
+
+/build*
+/.config
+
+*.log
+
+/.cproject
+/.project
+/.settings
+
+/valgrind.out
+/gmon.out
+
+# static analysis output
+/analysis
+
+# astyle backup files
+*.astyle.orig
+
