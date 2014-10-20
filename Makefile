@@ -18,7 +18,7 @@ SHELL := $(shell which bash)
 
 
 # Name for the application to produce.
-APP_NAME := template
+APP_NAME := simulator
 
 # Listings of source files for the different executables.
 SOURCES_cpp := $(wildcard src/*.cpp)
