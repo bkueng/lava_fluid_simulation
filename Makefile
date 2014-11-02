@@ -20,6 +20,9 @@ SHELL := $(shell which bash)
 # Name for the application to produce.
 APP_NAME := simulator
 
+LIBTIFF :=     3rdparty/tiff-4.0.3/libtiff/.libs/libtiff.a
+LIBTIFF_INC := 3rdparty/tiff-4.0.3/libtiff
+
 # Listings of source files for the different executables.
 SOURCES_cpp := $(wildcard src/*.cpp) 3rdparty/pugixml/pugixml.cpp \
 	3rdparty/tinyobjloader/tiny_obj_loader.cpp
@@ -35,7 +38,7 @@ CXXFLAGS_debug := 	$(CFLAGS_debug)
 CCt := 				gcc
 CXXt := 			g++
 LIBS :=				-lm
-INCPATH :=			-Iinclude
+INCPATH :=			-Iinclude -I$(LIBTIFF_INC)
 
 # whether or not to generate & use include dependency files
 USE_DEP_FILES :=	1
@@ -58,6 +61,15 @@ APP_NAME_dbg       := $(APP_NAME)_dbg
 VALGRIND_OUT_FILE  := valgrind.out
 
 debug: $(APP_NAME_dbg)
+
+$(LIBTIFF):
+	@echo ""
+	@echo "Error: First build libtiff library:"
+	@echo " cd 3rdparty/tiff-4.0.3"
+	@echo " ./configure --enable-static=yes --enable-shared=no --disable-lzw --disable-zlib --disable-jpeg --disable-lzma"
+	@echo " make"
+	@echo ""
+	@false
 
 
 # Dependency targets & includes
@@ -104,10 +116,10 @@ build_dbg/%.o: %.c
 
 # Link targets
 $(APP_NAME): $(patsubst %.cpp, build/%.o, $(SOURCES_cpp)) \
-	$(patsubst %.c, build/%.o, $(SOURCES_c))
+	$(patsubst %.c, build/%.o, $(SOURCES_c)) $(LIBTIFF)
 	$(LD) -o $@ $^ $(LIBS)
 $(APP_NAME_dbg): $(patsubst %.cpp, build_dbg/%.o, $(SOURCES_cpp)) \
-	$(patsubst %.c, build_dbg/%.o, $(SOURCES_c))
+	$(patsubst %.c, build_dbg/%.o, $(SOURCES_c)) $(LIBTIFF)
 	$(LD) -o $@ $^ $(LIBS)
 
 
