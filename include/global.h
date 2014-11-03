@@ -34,12 +34,14 @@ using namespace std;
 #include "exception.h"
 #include "logging.h"
 
+typedef float dfloat;
+
 
 #define SAVE_DEL(x) if(x) { delete(x); x=NULL; }
 #define SAVE_DEL_ARR(X) if(X) { delete[](X); X=NULL; }
 
 #ifndef APP_NAME
-#define APP_NAME "program"
+#define APP_NAME "simulator"
 #endif
 
 
