@@ -115,12 +115,12 @@ build_dbg/%.o: %.c
 	$(CC) -c $(CFLAGS_debug) $(INCPATH) $*.c -o $@
 
 # Link targets
-$(APP_NAME): $(patsubst %.cpp, build/%.o, $(SOURCES_cpp)) \
-	$(patsubst %.c, build/%.o, $(SOURCES_c)) $(LIBTIFF)
-	$(LD) -o $@ $^ $(LIBS)
-$(APP_NAME_dbg): $(patsubst %.cpp, build_dbg/%.o, $(SOURCES_cpp)) \
-	$(patsubst %.c, build_dbg/%.o, $(SOURCES_c)) $(LIBTIFF)
-	$(LD) -o $@ $^ $(LIBS)
+$(APP_NAME): $(LIBTIFF) $(patsubst %.cpp, build/%.o, $(SOURCES_cpp)) \
+	$(patsubst %.c, build/%.o, $(SOURCES_c))
+	$(LD) -o $@ $^ $(LIBTIFF) $(LIBS)
+$(APP_NAME_dbg): $(LIBTIFF) $(patsubst %.cpp, build_dbg/%.o, $(SOURCES_cpp)) \
+	$(patsubst %.c, build_dbg/%.o, $(SOURCES_c))
+	$(LD) -o $@ $^ $(LIBTIFF) $(LIBS)
 
 
 # static analyzer (using clang static analyzer)
