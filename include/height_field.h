@@ -12,8 +12,8 @@
  *
  */
 
-#ifndef HEIGHT_FIELD_H_
-#define HEIGHT_FIELD_H_
+#ifndef _HEIGHT_FIELD_H_
+#define _HEIGHT_FIELD_H_
 
 #include <tiny_obj_loader.h>
 #include "global.h"
@@ -28,6 +28,8 @@
  */
 class HeightField {
 public:
+	virtual ~HeightField();
+
 	/**
 	 * write the height field to a RIB (RenderMan Scene Description file).
 	 * The height field is consistent to how it is used in the simulation.
@@ -67,7 +69,6 @@ public:
 	dfloat& getField(int x, int z) { return m_field[x + m_width*z]; }
 protected:
 	HeightField() {}
-	~HeightField();
 
 
 	virtual void writeRIBTexCoords(FILE* file) = 0;
@@ -162,4 +163,4 @@ protected:
 };
 
 
-#endif /* HEIGHT_FIELD_H_ */
+#endif /* _HEIGHT_FIELD_H_ */

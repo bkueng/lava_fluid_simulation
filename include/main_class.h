@@ -17,6 +17,7 @@
 
 #include "global.h"
 #include "command_line.h"
+#include "height_field.h"
 
 
 /*********************************************************************//*
@@ -45,6 +46,7 @@ private:
 	
 	void processArgs();
 	
+	HeightField* m_height_field = NULL;
 	
 	CCommandLineParser* m_parameters;
 	ECLParsingResult m_cl_parse_result;

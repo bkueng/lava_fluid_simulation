@@ -1,0 +1,16 @@
+<general name="example">
+</general>
+
+<simulation>
+	<heightfield file="data/height_field/alpine-terrain.tif" max_height="0.6">
+		<tiff step_x="1" step_y="1"></tiff>
+	</heightfield>
+
+	<!-- TODO: timestep, duration, ... -->
+
+	<erruptions>
+	</erruptions>
+</simulation>
+
+<output>
+</output>

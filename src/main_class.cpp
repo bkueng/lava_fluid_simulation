@@ -13,7 +13,11 @@
  */
 
 #include "main_class.h"
+#include "pugixml.hpp"
+#include "height_field.h"
 #include "version.h"
+
+using namespace pugi;
 
 #include <cstdio>
 #include <cstdlib>
@@ -33,6 +37,7 @@ CMain::CMain() : m_parameters(NULL), m_cl_parse_result(Parse_none_found)
 CMain::~CMain()
 {
 	SAVE_DEL(m_parameters);
+	SAVE_DEL(m_height_field);
 }
 
 
@@ -60,9 +65,10 @@ void CMain::parseCommandLine(int argc, char* argv[])
 	m_parameters->addSwitch("no-file-log");
 	
 	
-	//m_parameters->addTask("main task", 't');
-	//m_parameters->addParam("output", 'o', "", "main task");
-	//m_parameters->addSwitch("new-only", 'n', "main task");
+	m_parameters->addParam("config", 'c');
+
+	m_parameters->addSwitch("simulate", 's');
+	m_parameters->addParam("generate-rib-heightfield", 'g');
 	
 	
 	m_cl_parse_result = m_parameters->parse();
@@ -72,8 +78,20 @@ void CMain::parseCommandLine(int argc, char* argv[])
 void CMain::printHelp()
 {
 	printf("Usage:\n"
-		   " " APP_NAME " [-v] \n"
+		   " " APP_NAME " [-v] -c <config> [--simulate]\n"
+		   " " APP_NAME " [-v] -c <config> [--generate-rib-heightfield <file>]\n"
 		   " " APP_NAME " --version\n"
+		   "\n"
+		   "  -c, --config <config>           specify configuration file\n"
+		   "                                  under ./config/\n"
+		   " tasks\n"
+		   "  -s, --simulate                  start simulation.\n"
+		   "                                  this is the default if no task is given\n"
+		   "  -g, --generate-rib-heightfield  <file>\n"
+		   "                                  create a RIB file for rendering\n"
+		   "                                  from the configured height field\n"
+		   "                                  and write the result to <file> (eg height_field.rib)\n"
+		   "\n"
 		   "  -v, --verbose                   print debug messages\n"
 		   "                                  (same as --log debug)\n"
 		   "  -h, --help                      print this message\n"
@@ -96,7 +114,7 @@ void CMain::exec()
 	
 	switch (m_cl_parse_result) {
 	case Parse_none_found:
-		printHelp();
+		processArgs();
 		break;
 	case Parse_unknown_command:
 		wrongUsage("Unknown command: %s",
@@ -158,19 +176,59 @@ void CMain::processArgs()
 		if (CLog::parseLevel(level, log_level))
 			CLog::getInstance().setFileLevel(log_level);
 	}
-	
-	
-	string device;
-	if (m_parameters->getParam("device", device)) {
-		//device set
+
+
+
+	bool do_simulate = true;
+	string config_file = "";
+	if (!m_parameters->getParam("config", config_file)) {
+		printf("Error: no config file given. use --help for the usage\n");
+		return;
+	}
+
+	xml_document doc;
+	xml_parse_result result = doc.load_file(config_file.c_str());
+	if(!result)
+		throw EXCEPTION_s(EINVALID_PARAMETER, "Error: Failed to open config file %s (%s)",
+				config_file.c_str(), result.description());
+
+
+	xpath_node height_field_node = doc.select_single_node("/simulation/heightfield");
+	if(!height_field_node) throw EXCEPTION_s(EFILE_PARSING_ERROR, "Error: config parsing error");
+	string height_field_file = height_field_node.node().attribute("file").as_string();
+
+	float max_height;
+	if(hasSuffix(toLower(height_field_file), ".tif")
+			|| hasSuffix(toLower(height_field_file), ".tiff")) {
+		max_height = height_field_node.node().attribute("max_height").as_float(1.);
+		xml_node tiff_child = height_field_node.node().child("tiff");
+		int step_x = tiff_child.attribute("step_x").as_int(1);
+		int step_y = tiff_child.attribute("step_y").as_int(1);
+		m_height_field = new HeightFieldTiff(height_field_file, max_height, step_x, step_y);
 	} else {
-		//device is default value
+		//TODO: obj??
+		throw EXCEPTION_s(EINVALID_PARAMETER, "Error: Unsupported height field %s", height_field_file.c_str());
 	}
-	
-	if (m_parameters->setTask("main task")->bGiven) {
-	
+
+	LOG(DEBUG, "height field: w=%i, d=%i, field depth=%f, max_height=%f",
+		m_height_field->width(), m_height_field->depth(), (float)m_height_field->fieldDepth(), max_height);
+
+
+	string rib_file;
+	if(m_parameters->getParam("generate-rib-heightfield", rib_file)) {
+		do_simulate = false;
+		FILE* file = fopen(rib_file.c_str(), "w");
+		if (!file) throw EXCEPTION(EFILE_ERROR);
+
+		LOG(DEBUG, "writing RIB heightfield");
+		m_height_field->writeRIBFile(file);
+		fclose(file);
 	}
-	
+
+	if(do_simulate || m_parameters->getSwitch("simulate")) {
+		LOG(DEBUG, "do simulation");
+		//TODO
+	}
 }
 
 
