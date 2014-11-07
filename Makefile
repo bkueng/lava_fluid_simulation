@@ -30,15 +30,15 @@ SOURCES_c:= $(wildcard src/*.c)
 HEADERS := $(wildcard include/*.h) $(wildcard 3rdparty/pugixml/*.hpp)
 
 # Generic flags for the C/CPP compiler.
-CFLAGS := 			-pipe -O2 -Wall -D'APP_NAME="$(APP_NAME)"' \
-					-I3rdparty/pugixml -I3rdparty/tinyobjloader
+CFLAGS := 			-pipe -O2 -Wall -D'APP_NAME="$(APP_NAME)"'
 CFLAGS_debug := 	-pipe -g -Wall -D'APP_NAME="$(APP_NAME)"' -D_DEBUG
 CXXFLAGS := 		$(CFLAGS) -std=c++11
 CXXFLAGS_debug := 	$(CFLAGS_debug) -std=c++11
 CCt := 				gcc
 CXXt := 			g++
 LIBS :=				-lm
-INCPATH :=			-Iinclude -I$(LIBTIFF_INC)
+INCPATH :=			-Iinclude -I$(LIBTIFF_INC) \
+					-I3rdparty/pugixml -I3rdparty/tinyobjloader
 
 # whether or not to generate & use include dependency files
 USE_DEP_FILES :=	1
