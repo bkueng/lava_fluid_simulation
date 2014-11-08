@@ -139,6 +139,7 @@ template<class Entry> template<class Iterable>
 void Grid<Entry>::updateEntries(Iterable& entries) {
 	memset(m_grid, 0, sizeof(Entry*) * m_width * m_height * m_depth);
 	for(auto& entry : entries) {
+		//TODO: check if a particle leaves the grid (??)
 		Entry*& grid_entry = grid(entry.position);
 		entry.next_in_grid = grid_entry;
 		grid_entry = &entry;
