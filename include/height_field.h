@@ -66,10 +66,10 @@ public:
 	inline dfloat lookup(dfloat x, dfloat z);
 
 	const dfloat& field(int x, int z) const { return m_field[x + m_width*z]; }
-	dfloat& getField(int x, int z) { return m_field[x + m_width*z]; }
 protected:
 	HeightField() {}
 
+	dfloat& getField(int x, int z) { return m_field[x + m_width*z]; }
 
 	virtual void writeRIBTexCoords(FILE* file) = 0;
 
