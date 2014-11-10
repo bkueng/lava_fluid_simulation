@@ -76,14 +76,14 @@ protected:
 	/**
 	 * create the field: called by the subclass
 	 */
-	void init(int width, int depth, dfloat max_height);
+	void init(int width, int depth, dfloat height_scaling);
 
 	dfloat* m_field = NULL;
 	int m_width = 0;
 	int m_depth = 0;
 
 	dfloat m_field_depth; //depth in field coordinates
-	dfloat m_max_height; //max y value: field will be scaled to be in this range (min is 0)
+	dfloat m_height_scaling; //field will be scaled by this amount
 };
 
 
@@ -132,10 +132,11 @@ public:
 	/**
 	 * @param shapes       wavefront objects. assumes y axis points upwards
 	 * @param field_size   field resolution. shapes will be resamples with this.
-	 * @param max_height   rescale the field to y values between [0, max_height]
+	 * @param height_scaling
+	 *                     scale height field values. y values will be in [0, height_scaling]
 	 */
 	HeightFieldObj(const std::vector<tinyobj::shape_t>& shapes, int field_size=2000,
-			dfloat max_height=0.6);
+			dfloat height_scaling=0.6);
 
 	virtual ~HeightFieldObj() {}
 protected:
@@ -150,11 +151,12 @@ public:
 	/**
 	 * @param tiff_file    a tiff file with one channel, 8 or 16 bits
 	 *                     image size defines the field resolution
-	 * @param max_height   rescale the field to y values between [0, max_height]
+	 * @param height_scaling
+	 *                     scale height field values. y values will be in [0, height_scaling]
 	 * @param step_x       use decreased resolution of tiff file (1 for full resolution)
 	 * @param step_y
 	 */
-	HeightFieldTiff(const std::string& tiff_file, dfloat max_height,
+	HeightFieldTiff(const std::string& tiff_file, dfloat height_scaling,
 			int step_x=1, int step_y=1);
 
 	virtual ~HeightFieldTiff() {}

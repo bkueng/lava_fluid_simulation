@@ -100,7 +100,10 @@ mkdir "$rendering_dir" &>/dev/null
 scene_file="$(getxmlattr "$config_file" "/config/output/rendering/@scene")"
 point_width="$(getxmlattr "$config_file" "/config/output/rendering/@constantwidth")"
 height_field_file="$(getxmlattr "$config_file" "/config/simulation/heightfield/@file")"
-#TODO: max_height
+height_scaling="$(getxmlattr "$config_file" "/config/simulation/heightfield/@scaling")"
+[ "$height_scaling" = "" ] && height_scaling=1
+#using bc: height_scaling_larger=`echo "$height_scaling+0.1" | bc`
+height_scaling_larger=`echo "$height_scaling 0.1" | awk '{printf "%f", $1 + $2}'`
 
 echo "Using Scene file: $scene_file"
 
@@ -114,6 +117,8 @@ sed -i "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
 height_field_file_esc="$(echo "$height_field_file" | sed -e 's/[\/&]/\\&/g')"
 sed -i "s/HEIGHT_FIELD_FILE/${height_field_file_esc}/g" "$scene_file_tmp"
 sed -i 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
+sed -i 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
+sed -i 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
 
 # iterate frames & render
 if [ "$frames" = "" ]; then

@@ -1,7 +1,9 @@
 <config>
 
 	<simulation>
-		<heightfield file="data/height_field/alpine-terrain.tif" max_height="0.6">
+		<heightfield
+			file="data/height_field/alpine-terrain.tif"
+			scaling="0.4">
 			<tiff step_x="1" step_y="1"></tiff>
 		</heightfield>
 

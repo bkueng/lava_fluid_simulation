@@ -208,23 +208,23 @@ void CMain::processArgs()
 	if(!height_field_node) throw EXCEPTION_s(EFILE_PARSING_ERROR, "Error: config parsing error");
 	string height_field_file = height_field_node.node().attribute("file").as_string();
 
-	float max_height;
+	float height_scaling;
 	if(hasSuffix(toLower(height_field_file), ".tif")
 			|| hasSuffix(toLower(height_field_file), ".tiff")) {
-		max_height = height_field_node.node().attribute("max_height").as_float(1.);
+		height_scaling = height_field_node.node().attribute("scaling").as_float(1.);
 		xml_node tiff_child = height_field_node.node().child("tiff");
 		int step_x = tiff_child.attribute("step_x").as_int(1);
 		int step_y = tiff_child.attribute("step_y").as_int(1);
-		m_height_field = new HeightFieldTiff(height_field_file, max_height, step_x, step_y);
+		m_height_field = new HeightFieldTiff(height_field_file, height_scaling, step_x, step_y);
 	} else {
 		//TODO: obj file??
 		throw EXCEPTION_s(EINVALID_PARAMETER, "Error: Unsupported height field %s",
 			height_field_file.c_str());
 	}
 
-	LOG(DEBUG, "height field: w=%i, d=%i, field depth=%f, max_height=%f",
+	LOG(DEBUG, "height field: w=%i, d=%i, field depth=%.3f, height_scaling=%.3f",
 		m_height_field->width(), m_height_field->depth(),
-		(float)m_height_field->fieldDepth(), max_height);
+		(float)m_height_field->fieldDepth(), height_scaling);
 
 
 	string rib_file;

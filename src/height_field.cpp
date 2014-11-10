@@ -53,10 +53,10 @@ void HeightField::writeRIBFile(FILE* file) {
 	writeRIBTexCoords(file);
 }
 
-void HeightField::init(int width, int depth, dfloat max_height) {
+void HeightField::init(int width, int depth, dfloat height_scaling) {
 	m_width = width;
 	m_depth = depth;
-	m_max_height = max_height;
+	m_height_scaling = height_scaling;
 	m_field_depth = (dfloat)depth / width;
 	if (m_field) delete[] m_field;
 	m_field = new dfloat[m_width * m_depth];
@@ -68,7 +68,7 @@ HeightField::~HeightField() {
 
 
 HeightFieldObj::HeightFieldObj(const std::vector<tinyobj::shape_t>& shapes,
-		int field_size, dfloat max_height) {
+		int field_size, dfloat height_scaling) {
 	//TODO
 
 	/*
@@ -132,7 +132,7 @@ for (size_t i = 0; i < materials.size(); i++) {
 
 
 HeightFieldTiff::HeightFieldTiff(const std::string& tiff_file,
-		dfloat max_height, int step_x, int step_y) {
+		dfloat height_scaling, int step_x, int step_y) {
 
 	TIFF* tif = TIFFOpen(tiff_file.c_str(), "r");
 	if(!tif) throw EXCEPTION_s(EFILE_ERROR, "failed to open TIFF file %s\n", tiff_file.c_str());
@@ -150,7 +150,7 @@ HeightFieldTiff::HeightFieldTiff(const std::string& tiff_file,
 		throw EXCEPTION_s(EFILE_PARSING_ERROR, "TIFF file contains more than one channel!\n");
 	}
 
-	init(image_width/step_x, image_height/step_y, max_height);
+	init(image_width/step_x, image_height/step_y, height_scaling);
 
 	uint16 bits_per_sample;
 	TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bits_per_sample);
@@ -159,8 +159,10 @@ HeightFieldTiff::HeightFieldTiff(const std::string& tiff_file,
 	buf = _TIFFmalloc(scanline);
 
 
-	dfloat max_value = 0;
+	dfloat scaling_factor = m_height_scaling;
 	if (bits_per_sample == 16) {
+		uint16 max_value = (uint16)-1;
+		scaling_factor /= (dfloat)max_value;
 		for (int row = 0; row < (int) image_height; row+=step_y) {
 			int z_idx = (image_height - row - 1)/step_y;
 			if (z_idx >= m_depth) continue;
@@ -169,11 +171,12 @@ HeightFieldTiff::HeightFieldTiff(const std::string& tiff_file,
 			for (int col = 0; col < scanline / ((int) bits_per_sample / 8); col+=step_x) {
 				if(col/step_x >= m_width) break;
 				dfloat val = (dfloat) b[col];
-				getField(col/step_x, z_idx) = val;
-				if (val > max_value) max_value = val;
+				getField(col/step_x, z_idx) = val * scaling_factor;
 			}
 		}
 	} else if (bits_per_sample == 8) {
+		uint8 max_value = (uint8)-1;
+		scaling_factor /= (dfloat)max_value;
 		for (int row = 0; row < (int) image_height; row+=step_y) {
 			int z_idx = (image_height - row - 1)/step_y;
 			if (z_idx >= m_depth) continue;
@@ -182,8 +185,7 @@ HeightFieldTiff::HeightFieldTiff(const std::string& tiff_file,
 			for (int col = 0; col < scanline / ((int) bits_per_sample / 8); col+=step_x) {
 				if(col/step_x >= m_width) break;
 				dfloat val = (dfloat) b[col];
-				getField(col/step_x, z_idx) = val;
-				if (val > max_value) max_value = val;
+				getField(col/step_x, z_idx) = val * scaling_factor;
 			}
 		}
 	} else {
@@ -194,16 +196,6 @@ HeightFieldTiff::HeightFieldTiff(const std::string& tiff_file,
 
 	_TIFFfree(buf);
 	TIFFClose(tif);
-
-	//normalize height
-	if (max_value > 0.) {
-		dfloat normalize_factor = m_max_height / max_value;
-		for (int z = 0; z < m_depth; ++z) {
-			for (int x = 0; x < m_width; ++x) {
-				getField(x, z) *= normalize_factor;
-			}
-		}
-	}
 }
 
 void HeightFieldTiff::writeRIBTexCoords(FILE* file) {
