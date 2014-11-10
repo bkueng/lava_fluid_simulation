@@ -65,6 +65,7 @@ void Simulation::run() {
 			particle.neighbors = neighbor_array;
 
 			auto neighbor_cb = [&](Particle* neighbor, dfloat dist2) {
+				DEBUG_ASSERT1(num_neighbors < min_neighbors_array_size);
 				neighbor_array[num_neighbors++] = neighbor;
 			};
 			m_grid->iterateNeighbors(particle.position,
