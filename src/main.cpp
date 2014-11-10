@@ -14,6 +14,7 @@
 
 #include "main_class.h"
 
+#include <pugixml.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -34,6 +35,9 @@ int main(int argc, char* argv[])
 		CMain main;
 		main.init(argc, argv);
 		main.exec();
+	} catch (pugi::xpath_exception& e) {
+		printf("XML parsing exception: %s\n", e.what());
+		return -1;
 	} catch (Exception& e) {
 		e.log();
 		return -1;

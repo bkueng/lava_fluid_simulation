@@ -193,7 +193,7 @@ void CMain::processArgs()
 				config_file.c_str(), result.description());
 
 
-	xpath_node height_field_node = doc.select_single_node("/simulation/heightfield");
+	xpath_node height_field_node = doc.select_single_node("/config/simulation/heightfield");
 	if(!height_field_node) throw EXCEPTION_s(EFILE_PARSING_ERROR, "Error: config parsing error");
 	string height_field_file = height_field_node.node().attribute("file").as_string();
 
@@ -206,12 +206,14 @@ void CMain::processArgs()
 		int step_y = tiff_child.attribute("step_y").as_int(1);
 		m_height_field = new HeightFieldTiff(height_field_file, max_height, step_x, step_y);
 	} else {
-		//TODO: obj??
-		throw EXCEPTION_s(EINVALID_PARAMETER, "Error: Unsupported height field %s", height_field_file.c_str());
+		//TODO: obj file??
+		throw EXCEPTION_s(EINVALID_PARAMETER, "Error: Unsupported height field %s",
+			height_field_file.c_str());
 	}
 
 	LOG(DEBUG, "height field: w=%i, d=%i, field depth=%f, max_height=%f",
-		m_height_field->width(), m_height_field->depth(), (float)m_height_field->fieldDepth(), max_height);
+		m_height_field->width(), m_height_field->depth(),
+		(float)m_height_field->fieldDepth(), max_height);
 
 
 	string rib_file;

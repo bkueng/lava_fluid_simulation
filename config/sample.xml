@@ -1,16 +1,23 @@
-<general name="example">
-</general>
+<config>
 
-<simulation>
-	<heightfield file="data/height_field/alpine-terrain.tif" max_height="0.6">
-		<tiff step_x="1" step_y="1"></tiff>
-	</heightfield>
+	<simulation>
+		<heightfield file="data/height_field/alpine-terrain.tif" max_height="0.6">
+			<tiff step_x="1" step_y="1"></tiff>
+		</heightfield>
 
-	<!-- TODO: timestep, duration, ... -->
+		<!-- TODO: timestep, duration, lava_source, ... -->
 
-	<erruptions>
-	</erruptions>
-</simulation>
 
-<output>
-</output>
+		<erruptions>
+			<!-- list of erruptions: time, duration, particles/sec, initial speed & temperature -->
+		</erruptions>
+	</simulation>
+
+	<output
+		format="points">
+		<rendering
+			scene="data/scenes/test.rib"
+			constantwidth="0.006">
+		</rendering>
+	</output>
+</config>
