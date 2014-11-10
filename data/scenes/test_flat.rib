@@ -1,0 +1,57 @@
+
+Format 800 600 1
+Hider "hidden"
+#Hider "zbuffer"
+#Hider "raytrace"
+
+
+Option "limits" "bucketsize" [ 64 64 ]
+Option "limits" "gridsize" [ 256 ]
+Option "limits" "eyesplits" [ 6 ]
+
+
+FrameBegin 1
+Display "output/rendering/OUTPUT_DIRECTORY/out_000000.tif" "file" "rgb"
+Projection "perspective" "fov" 30
+Translate 0 1.3 0.05
+Rotate 90 0 1 0
+Rotate -35 0 0 1
+WorldBegin
+        LightSource "ambientlight" 1 "intensity" 0.2
+        #LightSource "distantlight" 2 "intensity" 0.3 "from" [-4 6 -7] "to" [0 0 0]
+        #	"lightcolor" [1.0 0.4 1.0]
+        LightSource "distantlight" 3 "intensity" 0.2 "from" [14 6 7] "to" [0 -2 0]
+			"lightcolor" [0.0 1.0 1.0]
+
+        LightSource "distantlight" 4 "intensity" 0.8 "from" [-4 6 7] "to" [0 0 0]
+        "lightcolor" [1.0 1 1.0]
+
+		Translate -0.5 -1.5 -0.5
+
+    AttributeBegin
+        Attribute "identifier" "name" [ "heightfield" ]
+        #Surface "constant" 
+        Surface "metal" 
+            "float Ka" 1.0
+            "float roughness" 0.10000000149011612
+
+		PointsPolygons
+			[ 4 ]
+			[ 0 1 2 3 ]
+			"P" [ 0 0 0  1 0 0  1 0 1  0 0 1 ]
+    AttributeEnd
+
+
+	#particles
+    AttributeBegin
+        Opacity [ 0.6 0.6 0.6 ]
+        #Surface "metal" 
+        #    "float Ka" 1.0
+        #    "float roughness" 0.50000000149011612
+        Surface "constant" 
+		ReadArchive "output/simulation/OUTPUT_DIRECTORY/frame_000000.rib"
+		"constantwidth" [ 0.007 ]
+    AttributeEnd
+
+WorldEnd
+FrameEnd
