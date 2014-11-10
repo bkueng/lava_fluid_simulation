@@ -18,6 +18,7 @@
 #include "simulation.h"
 #include "version.h"
 
+using namespace Math;
 using namespace pugi;
 
 #include <cstdio>
@@ -242,10 +243,19 @@ void CMain::processArgs()
 		LOG(DEBUG, "do simulation");
 		SimulationConfig config;
 		xml_node config_node = doc.child("config");
-		xml_node simulation_node = config_node.child("simulation");
+		xml_node sim_node = config_node.child("simulation");
 		xml_node output_node = config_node.child("output");
 		//xml_node general_node = config_node.child("general");
-		//TODO: load config
+
+		config.simulation_time = (dfloat)sim_node.attribute("simulation_time").as_double(60);
+		config.neighbor_lookup_dist = (dfloat)sim_node.attribute("lookup_dist").as_double(0.03);
+		config.cell_size = (dfloat)sim_node.attribute("cell_size").as_double(0.03);
+		config.num_y_cells = sim_node.attribute("num_y_cells").as_int(20);
+		config.k = (dfloat)sim_node.attribute("pressure_k").as_double(1000);
+		config.rho0 = (dfloat)sim_node.attribute("rho0").as_double(1000);
+		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
+
+		//TODO: erruptions
 
 		//output directory
 		string output_dir = "output/simulation";
@@ -260,6 +270,21 @@ void CMain::processArgs()
 		}
 
 		Simulation* simulation = new Simulation(*m_height_field, config);
+
+		xml_node particles_grid = sim_node.child("particles_grid");
+		if(!particles_grid.empty()) {
+			Vec3f min_pos, max_pos, velocity;
+			Vec3i counts;
+			istringstream(particles_grid.attribute("min_pos").as_string("0 0 0")) >> min_pos;
+			istringstream(particles_grid.attribute("max_pos").as_string("1 0.05 1")) >> max_pos;
+			istringstream(particles_grid.attribute("count").as_string("100 5 100")) >> counts;
+			istringstream(particles_grid.attribute("velocity").as_string("0 0 0")) >> velocity;
+			dfloat temperature = (dfloat)particles_grid.attribute("temperature").as_double(100);
+			bool calc_mass = particles_grid.attribute("calc_mass").as_bool(false);
+			simulation->addParticlesOnGrid(min_pos, max_pos, counts, velocity,
+					temperature, calc_mass);
+		}
+
 		simulation->run();
 		LOG(DEBUG, "simulation ended");
 		delete simulation;

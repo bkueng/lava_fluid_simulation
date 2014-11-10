@@ -37,41 +37,21 @@ void Simulation::run() {
 	initOutput();
 
 	dfloat simulation_time = 0;
-
-	//add particles over a grid
-	dfloat x_min = 0.55, x_max = 0.65;
-	dfloat z_min = 0.5, z_max = 0.6;
-	dfloat y_min = 0.01, y_max = 0.05;
-	dfloat dx, dy, dz;
-	for(dfloat z = z_min; z<=z_max; z+=dz=(z_max-z_min)/10) {
-		for(dfloat x = x_min; x<=x_max; x+=dx=(x_max-x_min)/10) {
-			for(dfloat y = y_min; y<=y_max; y+=dy=(y_max-y_min)/5) {
-				Vec3f p, v(0);
-				p.x = x;
-				p.z = z;
-				p.y = m_height_field.lookup(p.x, p.z)+y;
-				addParticle(p, v, 100);
-			}
-		}
-	}
-	m_config.particle_mass = dx*dy*dz*m_config.rho0;
-	printf("particle mass=%lf\n", m_config.particle_mass);
-
-
-
 	int num_timesteps = 0;
 	int num_timesteps_total = 0;
 	int64_t start_time = getTickCount();
 	dfloat particle_mass = m_config.particle_mass;
 
-	MemoryPool<Particle*> memory_pool(500);
+	const int min_neighbors_array_size = 500;
+	MemoryPool<Particle*> memory_pool(min_neighbors_array_size);
+	bool simulation_running = true;
 
-	while(simulation_time < m_config.simulation_time &&
-		(m_config.num_frames == -1 || num_timesteps_total < m_config.num_frames)) {
+	while(simulation_running) {
 
 		dfloat dt = 0.003; //TODO: dynamic??
 
 		/* erruptions: add particles */
+		//TODO
 
 
 		/* neighbor search */
@@ -170,11 +150,13 @@ void Simulation::run() {
 		++num_timesteps;
 		++num_timesteps_total;
 
+		simulation_running = simulation_time < m_config.simulation_time &&
+				(m_config.num_frames == -1 || num_timesteps_total < m_config.num_frames);
 
 		/* statistics */
 		int64_t cur_time = getTickCount();
 		double elapsed_time = getTickSeconds(cur_time-start_time);
-		if(elapsed_time >= 1.) {
+		if(elapsed_time >= 1. || !simulation_running) {
 			printf("particles:%6i, time:%7.3f / %.3f, steps:%6.2f/s (%4.0fms/step), avg_neighbors:%3i\n",
 					(int)m_particles.size(), (float)simulation_time,
 					(float)m_config.simulation_time,
@@ -234,3 +216,26 @@ void Simulation::writeOutput(int frame) {
 	fclose(file);
 }
 
+void Simulation::addParticlesOnGrid(const Math::Vec3f& min_pos,
+		const Math::Vec3f& max_pos, const Math::Vec3i& counts,
+		const Math::Vec3f& initial_velocity, dfloat temperature, bool calc_mass) {
+	dfloat x_min = min_pos.x, x_max = max_pos.x;
+	dfloat y_min = min_pos.y, y_max = max_pos.y;
+	dfloat z_min = min_pos.z, z_max = max_pos.z;
+	dfloat dx, dy, dz;
+	Vec3f p;
+	for (dfloat z = z_min; z <= z_max; z+=dz=(z_max - z_min) / counts.z) {
+		for (dfloat x = x_min; x <= x_max; x+=dx=(x_max - x_min) / counts.x) {
+			for (dfloat y = y_min; y <= y_max; y+=dy=(y_max - y_min) / counts.y) {
+				p.x = x;
+				p.z = z;
+				p.y = m_height_field.lookup(p.x, p.z) + y;
+				addParticle(p, initial_velocity, temperature);
+			}
+		}
+	}
+	if(calc_mass) {
+		m_config.particle_mass = dx * dy * dz * m_config.rho0;
+		printf("Particle Mass=%lf\n", m_config.particle_mass);
+	}
+}

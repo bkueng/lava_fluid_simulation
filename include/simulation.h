@@ -65,6 +65,20 @@ public:
 
 	void run();
 
+	/**
+	 * add particles on a grid defined by min_pos and max_pos. y values will
+	 * be offset by the height field
+	 * @param min_pos
+	 * @param max_pos
+	 * @param counts              how many particles in each direction
+	 * @param initial_velocity
+	 * @param temperature
+	 * @param calc_mass           whether particle mass should be calculated
+	 *                            (from the volume). if false, use the config value
+	 */
+	void addParticlesOnGrid(const Math::Vec3f& min_pos, const Math::Vec3f& max_pos,
+        const Math::Vec3i& counts, const Math::Vec3f& initial_velocity,
+		dfloat temperature, bool calc_mass);
 private:
 
 	/** add a new particle. Note that this (can) invalidate all existing particle
