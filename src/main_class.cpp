@@ -15,6 +15,7 @@
 #include "main_class.h"
 #include "pugixml.hpp"
 #include "height_field.h"
+#include "simulation.h"
 #include "version.h"
 
 using namespace pugi;
@@ -23,6 +24,11 @@ using namespace pugi;
 #include <cstdlib>
 #include <cstdarg>
 #include <cstring>
+
+/* creating directories */
+#include <string.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 /*********************************************************************//*
  * class CMain
@@ -69,6 +75,8 @@ void CMain::parseCommandLine(int argc, char* argv[])
 
 	m_parameters->addSwitch("simulate", 's');
 	m_parameters->addParam("generate-rib-heightfield", 'g');
+
+	m_parameters->addParam("frames", 'f');
 	
 	
 	m_cl_parse_result = m_parameters->parse();
@@ -78,7 +86,7 @@ void CMain::parseCommandLine(int argc, char* argv[])
 void CMain::printHelp()
 {
 	printf("Usage:\n"
-		   " " APP_NAME " [-v] -c <config> [--simulate]\n"
+		   " " APP_NAME " [-v] -c <config> [--simulate] [-f <num>]\n"
 		   " " APP_NAME " [-v] -c <config> [--generate-rib-heightfield <file>]\n"
 		   " " APP_NAME " --version\n"
 		   "\n"
@@ -91,6 +99,9 @@ void CMain::printHelp()
 		   "                                  create a RIB file for rendering\n"
 		   "                                  from the configured height field\n"
 		   "                                  and write the result to <file> (eg height_field.rib)\n"
+		   "\n"
+		   " options\n"
+		   "  -f, --frames <num_frames>       limit number of simulated frames\n"
 		   "\n"
 		   "  -v, --verbose                   print debug messages\n"
 		   "                                  (same as --log debug)\n"
@@ -229,16 +240,52 @@ void CMain::processArgs()
 
 	if(do_simulate || m_parameters->getSwitch("simulate")) {
 		LOG(DEBUG, "do simulation");
-		//TODO
+		SimulationConfig config;
+		xml_node config_node = doc.child("config");
+		xml_node simulation_node = config_node.child("simulation");
+		xml_node output_node = config_node.child("output");
+		//xml_node general_node = config_node.child("general");
+		//TODO: load config
+
+		//output directory
+		string output_dir = "output/simulation";
+		createDirectory(output_dir);
+		string config_file_base = fileBaseName(config_file);
+		config.output_dir = output_dir + "/" + config_file_base;
+		createDirectory(config.output_dir);
+
+		string sframes;
+		if(m_parameters->getParam("frames", sframes)) {
+			config.num_frames = atoi(sframes.c_str());
+		}
+
+		Simulation* simulation = new Simulation(*m_height_field, config);
+		simulation->run();
+		LOG(DEBUG, "simulation ended");
+		delete simulation;
 	}
 }
 
+void CMain::createDirectory(const std::string& directory) {
+	struct stat st;
+	if (stat(directory.c_str(), &st) == 0) return;
 
+	int status = mkdir(directory.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	if (status) {
+		THROW_s(EFILE_ERROR, "Failed to create directory %s (%s)",
+				directory.c_str(), strerror(errno));
+	}
+}
 
+std::string CMain::fileBaseName(const std::string& directory) {
+	string tmp = directory;
+	auto pivot = std::find(directory.rbegin(), directory.rend(), '/');
+	if(pivot != directory.rend()) tmp = string(pivot.base(), directory.end());
+	return removeExtension(tmp);
+}
 
-
-
-
-
-
-
+string CMain::removeExtension(std::string const& filename) {
+	auto pivot = std::find(filename.rbegin(), filename.rend(), '.');
+	return pivot == filename.rend() ?
+			filename : std::string(filename.begin(), pivot.base() - 1);
+}

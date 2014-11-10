@@ -16,6 +16,8 @@
 #include "timer.h"
 #include "memory_pool.h"
 
+#include <cstdio>
+
 using namespace Math;
 
 Simulation::Simulation(HeightField& height_field, const SimulationConfig& config)
@@ -31,29 +33,14 @@ Simulation::~Simulation() {
 }
 
 void Simulation::run() {
-	dfloat simulation_time = 0;
-	/*
-	//test: add particles & test grid neighbor iter
-	Vec3f p, v(0);
-	p.x = 0.3; p.z = 0.23;
-	p.y = m_height_field.lookup(p.x, p.z)+0.01;
-	addParticle(p, v, 10);
-	p += Vec3f(0.001, 0., 0);
-	p.y = m_height_field.lookup(p.x, p.z)+0.01;
-	addParticle(p, v, 10);
 
-	m_grid->updateEntries(m_particles);
-	printf("lookup pos=%.3f %.3f %.3f\n", p.x, p.y, p.z);
-	auto cb = [&](Particle* p, dfloat dist2) {
-		Vec3f& pos = p->position;
-		printf("neighbor: %.3f, %.3f, %.3f, d=%.4f\n", pos.x, pos.y, pos.z, sqrt(dist2));
-	};
-	m_grid->iterateNeighbors(p, 0.0013, cb);
-	//*/
+	initOutput();
+
+	dfloat simulation_time = 0;
 
 	//add particles over a grid
-	dfloat x_min = 0.3, x_max = 0.6;
-	dfloat z_min = 0.3, z_max = 0.6;
+	dfloat x_min = 0.55, x_max = 0.65;
+	dfloat z_min = 0.5, z_max = 0.6;
 	dfloat y_min = 0.01, y_max = 0.05;
 	dfloat dx, dy, dz;
 	for(dfloat z = z_min; z<=z_max; z+=dz=(z_max-z_min)/10) {
@@ -71,6 +58,7 @@ void Simulation::run() {
 	printf("particle mass=%lf\n", m_config.particle_mass);
 
 
+
 	int num_timesteps = 0;
 	int num_timesteps_total = 0;
 	int64_t start_time = getTickCount();
@@ -78,8 +66,10 @@ void Simulation::run() {
 
 	MemoryPool<Particle*> memory_pool(500);
 
-	while(simulation_time < m_config.simulation_time) {
-		dfloat dt = 0.00001; //TODO: dynamic??
+	while(simulation_time < m_config.simulation_time &&
+		(m_config.num_frames == -1 || num_timesteps_total < m_config.num_frames)) {
+
+		dfloat dt = 0.003; //TODO: dynamic??
 
 		/* erruptions: add particles */
 
@@ -135,7 +125,8 @@ void Simulation::run() {
 					neighbor_part->density);
 			}
 			force_pressure *= -0.5 * particle_mass * m_kernel_pressure.kernelWeightGrad();
-			force_viscosity *= m_config.viscosity * particle_mass * m_kernel_viscosity.kernelWeightLaplace();
+			force_viscosity *= m_config.viscosity * particle_mass *
+					m_kernel_viscosity.kernelWeightLaplace();
 
 			Math::Vec3f force_gravity = particle.density*m_config.g;
 
@@ -144,10 +135,35 @@ void Simulation::run() {
 
 
 		/* update positions, velocities & handle collisions */
+		for (auto& particle : m_particles) {
+			//TODO: better integration scheme? -> leapfrog?
+
+			particle.velocity += dt * particle.forces / particle.density;
+			particle.position += dt * particle.velocity;
+
+			//TODO: collisions: use grid
+
+			Vec3f& pos = particle.position;
+			if(pos.x < Math::FEQ_EPS)
+				pos.x = Math::FEQ_EPS;
+			else if(pos.x > m_height_field.fieldWidth()-Math::FEQ_EPS)
+				pos.x = m_height_field.fieldWidth()-Math::FEQ_EPS;
+			if(pos.z < Math::FEQ_EPS)
+				pos.z = Math::FEQ_EPS;
+			else if(pos.z > m_height_field.fieldDepth()-Math::FEQ_EPS)
+				pos.z = m_height_field.fieldDepth()-Math::FEQ_EPS;
+
+			dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
+			if(pos.y < height_field_val) pos.y = height_field_val;
+
+			//test//////////
+			dfloat y_max = m_config.cell_size*(m_config.num_y_cells-5) + height_field_val;
+			if(pos.y > y_max) pos.y = y_max;
+		}
 
 
 		/* write output */
-		//writeOutput(num_timesteps_total)
+		writeOutput(num_timesteps_total);
 
 
 		simulation_time += dt;
@@ -179,3 +195,42 @@ inline void Simulation::addParticle(const Math::Vec3f& position,
 	particle.temperature = temperature;
 	m_particles.push_back(particle);
 }
+
+void Simulation::initOutput() {
+	printf("Saving output to %s\n", m_config.output_dir.c_str());
+}
+
+void Simulation::writeOutput(int frame) {
+	char buffer[32];
+	/* RIB output */
+	sprintf(buffer, "/frame_%06i.rib", frame);
+	string file_name = m_config.output_dir + buffer;
+
+	FILE* file = fopen(file_name.c_str(), "w");
+	if (!file) throw EXCEPTION(EFILE_ERROR);
+	//positions
+	fprintf(file, "Points \"P\" [ ");
+	for(const auto& particle : m_particles) {
+		fprintf(file, "%.7lf %.7lf %.7lf ",
+			(double)particle.position.x, (double)particle.position.y, (double)particle.position.z);
+	}
+
+	fprintf(file, "]\n \"Cs\" [ ");
+	//colors
+	dfloat max_density = -1e12;
+	dfloat min_density =  1e12;
+	for(const auto& particle : m_particles) {
+		if(particle.density > max_density) max_density = particle.density;
+		if(particle.density < min_density) min_density = particle.density;
+	}
+	for(const auto& particle : m_particles) {
+		float r = 1;
+		float g = (particle.density-min_density)/(max_density-min_density);
+		float b = 0;
+		fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+	}
+	fprintf(file, "]\n");
+
+	fclose(file);
+}
+

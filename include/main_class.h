@@ -19,6 +19,7 @@
 #include "command_line.h"
 #include "height_field.h"
 
+#include <string>
 
 /*********************************************************************//*
  * class CMain
@@ -46,6 +47,13 @@ private:
 	
 	void processArgs();
 	
+	/** create a directory if it does not exist */
+	void createDirectory(const std::string& directory);
+
+	/** get base name of a file name (strip preceding directory & file extension */
+	std::string fileBaseName(const std::string& directory);
+	std::string removeExtension(std::string const& filename);
+
 	HeightField* m_height_field = NULL;
 	
 	CCommandLineParser* m_parameters;

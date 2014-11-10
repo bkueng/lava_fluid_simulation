@@ -22,6 +22,7 @@
 #include "kernel.h"
 
 #include <vector>
+#include <string>
 
 struct ErruptionConfig {
 	dfloat start_time;
@@ -29,12 +30,13 @@ struct ErruptionConfig {
 };
 
 struct SimulationConfig {
-	dfloat simulation_time = 0.1; /** total time to simulate */
+	dfloat simulation_time = 60; /** total time to simulate */
+	int num_frames = -1; /** limit number of frames (-1 = no limit) */
 
-	dfloat neighbor_lookup_dist = 0.08;
+	dfloat neighbor_lookup_dist = 0.03;
 
-	dfloat cell_size = 0.08; /** cell size in [0,1] space */
-	int num_y_cells = 25; /** number of cells in y direction: increase this for smaller cell_size! */
+	dfloat cell_size = 0.03; /** cell size in [0,1] space */
+	int num_y_cells = 65; /** number of cells in y direction: increase this for smaller cell_size! */
 
 	//pressure constants
 	dfloat k = 1000; /** stiffness parameter: higher stiffness needs smaller timesteps */
@@ -47,6 +49,9 @@ struct SimulationConfig {
 	dfloat particle_mass = 0.0072;
 
 	std::vector<ErruptionConfig> erruptions;
+
+	/* output */
+	std::string output_dir; /** output directory without ending '/' */
 };
 
 /**
@@ -71,6 +76,9 @@ private:
 	inline dfloat pressure(const Particle& particle) {
 		return std::max((dfloat)0., m_config.k * (particle.density - m_config.rho0));
 	}
+
+	void initOutput();
+	void writeOutput(int frame);
 
 	SimulationConfig m_config;
 
