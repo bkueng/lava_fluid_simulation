@@ -25,3 +25,5 @@
 # astyle backup files
 *.astyle.orig
 
+/other_data
+

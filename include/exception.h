@@ -146,8 +146,8 @@ private:
 	}
 #define DEBUG_ASSERT1(exp) \
 	if(!(exp)) { \
-		printf("Assertion \"%s\" failed (%s:%i %s)\n", #exp, __FILE__, __LINE__, __FUNCTION__); \
-		printf("\nGood bye\n"); abort(); \
+		printf("\nAssertion \"%s\" failed\nIn: %s:%i %s\n", #exp, __FILE__, __LINE__, __FUNCTION__); \
+		printf("Good bye\n"); abort(); \
 	}
 #else
 #define DEBUG_ASSERT(exp, err_fmt, ...) \
