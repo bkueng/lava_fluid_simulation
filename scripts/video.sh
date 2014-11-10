@@ -30,3 +30,5 @@ file_name="$file_name$idx"
 ffmpeg -i "$rendering_dir"/out_%06d.tif -r "$FPS" -crf 22 \
 	-vcodec libx264 -threads 6 "$output_dir/$file_name$suffix"
 
+echo "Generated video: $output_dir/$file_name$suffix"
+
