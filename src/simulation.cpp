@@ -173,6 +173,8 @@ void Simulation::run() {
 			num_timesteps = 0;
 		}
 	}
+
+	printf("Done: calculated %i timesteps\n", num_timesteps_total);
 }
 
 inline void Simulation::addParticle(const Math::Vec3f& position,
@@ -228,7 +230,7 @@ void Simulation::addParticlesOnGrid(const Math::Vec3f& min_pos,
 	dfloat x_min = min_pos.x, x_max = max_pos.x;
 	dfloat y_min = min_pos.y, y_max = max_pos.y;
 	dfloat z_min = min_pos.z, z_max = max_pos.z;
-	dfloat dx, dy, dz;
+	dfloat dx=0, dy=0, dz=0;
 	Vec3f p;
 	for (dfloat z = z_min; z <= z_max; z+=dz=(z_max - z_min) / counts.z) {
 		for (dfloat x = x_min; x <= x_max; x+=dx=(x_max - x_min) / counts.x) {
