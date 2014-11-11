@@ -16,6 +16,8 @@
 #include <tiffio.h>
 #include <cmath>
 
+using namespace Math;
+
 void HeightField::writeRIBFile(FILE* file) {
 
 	fprintf(file, "PointsPolygons\n");
@@ -60,10 +62,46 @@ void HeightField::init(int width, int depth, dfloat height_scaling) {
 	m_field_depth = (dfloat)depth / width;
 	if (m_field) delete[] m_field;
 	m_field = new dfloat[m_width * m_depth];
+	m_normals = new Vec3f[m_width * m_depth];
+}
+void HeightField::finalizeInit() {
+	/* calculate vertex normals */
+	Vec3f up(0.), right(0.);
+	dfloat dx = 1./(dfloat)(m_width-1);
+	dfloat dz = m_field_depth/(dfloat)(m_depth-1);
+	up.z = -2.*dz;
+	right.x = 2.*dx;
+	for (int z = 0; z < m_depth; ++z) {
+		for (int x = 0; x < m_width; ++x) {
+			up.y = field(x, std::max(0, z-1)) - field(x, std::min(m_depth-1, z+1));
+			right.y = field(std::min(m_width-1, x+1), z) - field(std::max(0, x-1), z);
+			getNormal(x, z) = cross(right, up).normalized();
+		}
+	}
+}
+
+void HeightField::normal(dfloat x, dfloat z, Math::Vec3f& normal) const {
+	DEBUG_ASSERT(x >= 0. && x < 1., "x out of range: %f", (float)x);
+	DEBUG_ASSERT(z >= 0. && z < m_field_depth, "z out of range: %f", (float)z);
+
+	dfloat fx = x*(dfloat)(m_width-1);
+	dfloat fz = z/m_field_depth*(dfloat)(m_depth-1);
+	dfloat fidx_x = floor(fx);
+	dfloat fidx_z = floor(fz);
+	int idx_x = (int)fidx_x;
+	int idx_z = (int)fidx_z;
+	dfloat u = fx - fidx_x;
+	dfloat v = fz - fidx_z;
+
+	//bilinear interpolation
+	normal = (1.-v)*((1.-u)*getNormal(idx_x, idx_z) + u* getNormal(idx_x+1, idx_z))
+			+ v*((1-u)* getNormal(idx_x, idx_z+1) + u* getNormal(idx_x+1, idx_z+1));
+	normal.normalize();
 }
 
 HeightField::~HeightField() {
 	if (m_field) delete[] m_field;
+	if (m_normals) delete[] m_normals;
 }
 
 
@@ -196,6 +234,8 @@ HeightFieldTiff::HeightFieldTiff(const std::string& tiff_file,
 
 	_TIFFfree(buf);
 	TIFFClose(tif);
+
+	finalizeInit();
 }
 
 void HeightFieldTiff::writeRIBTexCoords(FILE* file) {

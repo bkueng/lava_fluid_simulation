@@ -20,6 +20,8 @@
 #include <iostream>
 #include <string>
 
+#include "Math/Vec3.h"
+
 
 /**
  * Base class to store a height field. it is in the range [0,1] x [0,z]
@@ -63,13 +65,19 @@ public:
 	 * @return the y value at position [x,z]
 	 * it uses the same calculation as for rendering (RIB output)
 	 */
-	inline dfloat lookup(dfloat x, dfloat z);
+	inline dfloat lookup(dfloat x, dfloat z) const;
+
+	/**
+	 * calculate field normal at (x,z) location (normal will have length 1)
+	 */
+	void normal(dfloat x, dfloat z, Math::Vec3f& normal) const;
 
 	const dfloat& field(int x, int z) const { return m_field[x + m_width*z]; }
 protected:
 	HeightField() {}
 
-	dfloat& getField(int x, int z) { return m_field[x + m_width*z]; }
+	dfloat& getField(int x, int z) const { return m_field[x + m_width*z]; }
+	Math::Vec3f& getNormal(int x, int z) const { return m_normals[x + m_width*z]; }
 
 	virtual void writeRIBTexCoords(FILE* file) = 0;
 
@@ -77,17 +85,23 @@ protected:
 	 * create the field: called by the subclass
 	 */
 	void init(int width, int depth, dfloat height_scaling);
+	/**
+	 * after the m_field data has been set...
+	 * calculate the normals
+	 */
+	void finalizeInit();
 
 	dfloat* m_field = NULL;
 	int m_width = 0;
 	int m_depth = 0;
+	Math::Vec3f* m_normals = NULL; /** normals at grid point */
 
 	dfloat m_field_depth; //depth in field coordinates
 	dfloat m_height_scaling; //field will be scaled by this amount
 };
 
 
-dfloat HeightField::lookup(dfloat x, dfloat z) {
+dfloat HeightField::lookup(dfloat x, dfloat z) const {
 	DEBUG_ASSERT(x >= 0. && x < 1., "x out of range: %f", (float)x);
 	DEBUG_ASSERT(z >= 0. && z < m_field_depth, "z out of range: %f", (float)z);
 
