@@ -117,22 +117,26 @@ void Simulation::run() {
 
 		/* update positions, velocities & handle collisions */
 		for (auto& particle : m_particles) {
-			//TODO: better integration scheme? -> leapfrog?
-
+			//symplectic euler
 			particle.velocity += dt * particle.forces / particle.density;
 			particle.position += dt * particle.velocity;
 
-			//TODO: collisions: use grid
-
+			//grid boundaries: assume perfect elastic (should not occur anyway)
 			Vec3f& pos = particle.position;
-			if(pos.x < Math::FEQ_EPS)
+			if(pos.x < Math::FEQ_EPS) {
 				pos.x = Math::FEQ_EPS;
-			else if(pos.x > m_height_field.fieldWidth()-Math::FEQ_EPS)
+				particle.velocity.x = -particle.velocity.x;
+			} else if(pos.x > m_height_field.fieldWidth()-Math::FEQ_EPS) {
 				pos.x = m_height_field.fieldWidth()-Math::FEQ_EPS;
-			if(pos.z < Math::FEQ_EPS)
+				particle.velocity.x = -particle.velocity.x;
+			}
+			if(pos.z < Math::FEQ_EPS) {
 				pos.z = Math::FEQ_EPS;
-			else if(pos.z > m_height_field.fieldDepth()-Math::FEQ_EPS)
+				particle.velocity.z = -particle.velocity.z;
+			} else if(pos.z > m_height_field.fieldDepth()-Math::FEQ_EPS) {
 				pos.z = m_height_field.fieldDepth()-Math::FEQ_EPS;
+				particle.velocity.z = -particle.velocity.z;
+			}
 
 			dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
 			if(pos.y < height_field_val) pos.y = height_field_val;
