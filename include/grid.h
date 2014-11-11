@@ -68,6 +68,13 @@ public:
 	inline void iterateNeighbors(const Math::Vec3f& position, dfloat max_dist,
 			const std::function<void (Entry*, dfloat dist2)>& callback) const;
 
+	/**
+	 * make sure a position is within the grid. this only checks the y coordinate!
+	 * @param position
+	 * @return          true if position changed & was outside the grid
+	 */
+	inline bool moveInsideGrid(Math::Vec3f& position) const;
+
 private:
 	/** convert 3d position in scale [0,1] -> grid (index) */
 	inline Entry*& grid(const Math::Vec3f& pos) const;
@@ -139,7 +146,6 @@ template<class Entry> template<class Iterable>
 void Grid<Entry>::updateEntries(Iterable& entries) {
 	memset(m_grid, 0, sizeof(Entry*) * m_width * m_height * m_depth);
 	for(auto& entry : entries) {
-		//TODO: check if a particle leaves the grid (??)
 		Entry*& grid_entry = grid(entry.position);
 		entry.next_in_grid = grid_entry;
 		grid_entry = &entry;
@@ -187,6 +193,24 @@ inline void Grid<Entry>::gridIndex(const Math::Vec3f& pos, int& x, int& y, int& 
 
 	DEBUG_ASSERT1(x>=0 && x<m_width && y>=0 && y<m_height && z>=0 && z<m_depth);
 }
+
+template<class Entry>
+inline bool Grid<Entry>::moveInsideGrid(Math::Vec3f& position) const {
+	int x = (int) (position.x / m_cell_size.x);
+	int z = (int) (position.z / m_cell_size.z);
+	dfloat elev = elevation(x, z);
+	int y = (int) ((position.y - elev) / m_cell_size.y);
+	if (y < 0) {
+		position.y = Math::FEQ_EPS + elev;
+		return true;
+	}
+	if (y >= m_height) {
+		position.y = m_cell_size.y * (dfloat)(m_height - 1) - Math::FEQ_EPS + elev;
+		return true;
+	}
+	return false;
+}
+
 
 template<class Entry>
 inline int Grid<Entry>::gridIndex(int x, int y, int z) const {

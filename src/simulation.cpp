@@ -137,9 +137,10 @@ void Simulation::run() {
 			dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
 			if(pos.y < height_field_val) pos.y = height_field_val;
 
-			//test//////////
-			dfloat y_max = m_config.cell_size*(m_config.num_y_cells-5) + height_field_val;
-			if(pos.y > y_max) pos.y = y_max;
+			//make sure no particle leaves the field in y direction
+			//This should never happen with correct scene config!
+			//TODO: turn this off once we have a stable version??
+			m_grid->moveInsideGrid(pos);
 		}
 
 
