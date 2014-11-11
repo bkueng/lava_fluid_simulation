@@ -8,6 +8,7 @@
 		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.0072"
+		ground_spring="100"
 		>
 
 		<heightfield

@@ -254,6 +254,7 @@ void CMain::processArgs()
 		config.k = (dfloat)sim_node.attribute("pressure_k").as_double(1000);
 		config.rho0 = (dfloat)sim_node.attribute("rho0").as_double(1000);
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
+		config.ground_spring = (dfloat)sim_node.attribute("ground_spring").as_double(100.);
 
 		//TODO: erruptions
 

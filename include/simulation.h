@@ -48,6 +48,8 @@ struct SimulationConfig {
 
 	dfloat particle_mass = 0.0072;
 
+	dfloat ground_spring = 100.; /** ground spring constant */
+
 	std::vector<ErruptionConfig> erruptions;
 
 	/* output */

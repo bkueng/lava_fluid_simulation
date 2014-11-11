@@ -117,12 +117,22 @@ void Simulation::run() {
 
 		/* update positions, velocities & handle collisions */
 		for (auto& particle : m_particles) {
+			Vec3f& pos = particle.position;
+
+			//ground contact
+			dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
+			if(pos.y < height_field_val) {
+				//pos.y = height_field_val;
+				Vec3f n;
+				m_height_field.normal(pos.x, pos.z, n);
+				particle.forces += n * ((height_field_val - pos.y)*m_config.ground_spring);
+			}
+
 			//symplectic euler
 			particle.velocity += dt * particle.forces / particle.density;
 			particle.position += dt * particle.velocity;
 
 			//grid boundaries: assume perfect elastic (should not occur anyway)
-			Vec3f& pos = particle.position;
 			if(pos.x < Math::FEQ_EPS) {
 				pos.x = Math::FEQ_EPS;
 				particle.velocity.x = -particle.velocity.x;
@@ -137,9 +147,6 @@ void Simulation::run() {
 				pos.z = m_height_field.fieldDepth()-Math::FEQ_EPS;
 				particle.velocity.z = -particle.velocity.z;
 			}
-
-			dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
-			if(pos.y < height_field_val) pos.y = height_field_val;
 
 			//make sure no particle leaves the field in y direction
 			//This should never happen with correct scene config!
