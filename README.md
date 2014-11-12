@@ -8,10 +8,15 @@ It is a project developed in the ETH course Physically-based Simulation.
 There are no external dependencies. The code works under Linux & Mac.
 
 Release build:
-$ make
+`$ make`
 
 Debug build:
-$ make debug
+`$ make debug`
+
+Then to render you need to first compile the shaders in data/shaders. Eg for
+Pixie:
+`$ cd data/shaders`
+`$ sdrc *.sl`
 
 
 #### Usage ####

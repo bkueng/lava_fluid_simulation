@@ -96,6 +96,9 @@ data_dir="output/simulation/$base_name"
 rendering_dir="output/rendering/$base_name"
 mkdir "$rendering_dir" &>/dev/null
 
+# additional shaders path
+export SHADERS=data/shaders
+
 # parse config file
 scene_file="$(getxmlattr "$config_file" "/config/output/rendering/@scene")"
 point_width="$(getxmlattr "$config_file" "/config/output/rendering/@constantwidth")"
