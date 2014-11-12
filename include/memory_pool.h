@@ -30,6 +30,7 @@ public:
 	 * @param alloc_factor     allocation chunk size = min_chunk_size * alloc_factor
 	 */
 	MemoryPool(int min_chunk_size, int alloc_factor = 100);
+	MemoryPool(const MemoryPool& other);
 	~MemoryPool();
 
 	/** reset: assume all memory is released */
@@ -77,6 +78,14 @@ inline void MemoryPool<T>::reset() {
 	m_cur_chunk = m_chunks.begin();
 	m_cur_chunk->next_free = 0;
 }
+
+template<class T>
+MemoryPool<T>::MemoryPool(const MemoryPool& other)
+	: m_min_chunk_size(other.m_min_chunk_size), m_alloc_factor(other.m_alloc_factor) {
+	addNewChunk();
+	reset();
+}
+
 template<class T>
 inline void MemoryPool<T>::addNewChunk() {
 	Element new_element;
