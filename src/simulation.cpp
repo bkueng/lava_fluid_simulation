@@ -45,21 +45,23 @@ void Simulation::run() {
 	const int min_neighbors_array_size = 500;
 	MemoryPool<Particle*> memory_pool(min_neighbors_array_size);
 	bool simulation_running = true;
-
-	while(simulation_running) {
+	long global_num_neighbors = 0; /** total number of neighbors including all threads */
+	const int chunk_size = 1000; /** amount of particles to iterate per chunk for each thread */
 
 	dfloat dt = m_config.time_step; //TODO: dynamic??
 
-		/* erruptions: add particles */
-		//TODO
+	m_grid->updateEntries(m_particles);
 
+#pragma omp parallel firstprivate(memory_pool)
+	while(simulation_running) {
+
+		memory_pool.reset();
 
 		/* neighbor search */
-		memory_pool.reset();
-		m_grid->updateEntries(m_particles);
-
-		long total_neighbors=0;
-		for(auto& particle : m_particles) {
+		long local_total_neighbors=0;
+#pragma omp for schedule(dynamic, chunk_size)
+		for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
+			Particle& particle = m_particles[particle_idx];
 			int num_neighbors = 0;
 			Particle** neighbor_array = memory_pool.next();
 			particle.neighbors = neighbor_array;
@@ -73,13 +75,17 @@ void Simulation::run() {
 
 			memory_pool.setNumUsedElements(num_neighbors);
 			particle.num_neighbors = num_neighbors;
-			total_neighbors += num_neighbors;
+			local_total_neighbors += num_neighbors;
 		}
-		int avg_neighbors = (int)(total_neighbors / m_particles.size());
+
+#pragma omp atomic
+		global_num_neighbors += local_total_neighbors;
 
 
 		/* density update */
-		for (auto& particle : m_particles) {
+#pragma omp for schedule(dynamic, chunk_size)
+		for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
+			Particle& particle = m_particles[particle_idx];
 			dfloat kernel_sum = 0;
 			for (int i = 0; i < particle.num_neighbors; ++i) {
 				kernel_sum += m_kernel.eval(particle.position, particle.neighbors[i]->position);
@@ -88,8 +94,11 @@ void Simulation::run() {
 		}
 
 
+
 		/* force computation */
-		for (auto& particle : m_particles) {
+#pragma omp for schedule(dynamic, chunk_size)
+		for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
+			Particle& particle = m_particles[particle_idx];
 			dfloat particle_pressure = pressure(particle);
 
 			Vec3f force_pressure(0.);
@@ -116,7 +125,9 @@ void Simulation::run() {
 
 
 		/* update positions, velocities & handle collisions */
-		for (auto& particle : m_particles) {
+#pragma omp for schedule(dynamic, chunk_size)
+		for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
+			Particle& particle = m_particles[particle_idx];
 			Vec3f& pos = particle.position;
 
 			//ground contact
@@ -155,29 +166,47 @@ void Simulation::run() {
 		}
 
 
-		/* write output */
-		writeOutput(num_timesteps_total);
+		//serial part: only one thread should update this. the others will wait
+#pragma omp single
+		{
 
 
-		simulation_time += dt;
-		++num_timesteps;
-		++num_timesteps_total;
+			/* write output */
+			writeOutput(num_timesteps_total);
 
-		simulation_running = simulation_time < m_config.simulation_time &&
-				(m_config.num_frames == -1 || num_timesteps_total < m_config.num_frames);
+			simulation_time += dt;
+			++num_timesteps;
+			++num_timesteps_total;
 
-		/* statistics */
-		int64_t cur_time = getTickCount();
-		double elapsed_time = getTickSeconds(cur_time-start_time);
-		if(elapsed_time >= 1. || !simulation_running) {
-			printf("particles:%6i, time:%7.3f / %.3f, steps:%6.2f/s (%4.0fms/step), avg_neighbors:%3i\n",
-					(int)m_particles.size(), (float)simulation_time,
-					(float)m_config.simulation_time,
-					(float)num_timesteps / elapsed_time,
-					(float)elapsed_time/num_timesteps*1000.f,
-					avg_neighbors);
-			start_time = cur_time;
-			num_timesteps = 0;
+			simulation_running = simulation_time < m_config.simulation_time &&
+					(m_config.num_frames == -1 || num_timesteps_total < m_config.num_frames);
+
+			/* statistics */
+			int64_t cur_time = getTickCount();
+			double elapsed_time = getTickSeconds(cur_time-start_time);
+			if(elapsed_time >= 1. || !simulation_running) {
+				int avg_neighbors = (int)(global_num_neighbors / m_particles.size());
+				printf("particles:%6i, time:%7.3f / %.3f, steps:%6.2f/s (%4.0fms/step), avg_neighbors:%3i\n",
+						(int)m_particles.size(), (float)simulation_time,
+						(float)m_config.simulation_time,
+						(float)num_timesteps / elapsed_time,
+						(float)elapsed_time/num_timesteps*1000.f,
+						avg_neighbors);
+				start_time = cur_time;
+				num_timesteps = 0;
+			}
+			global_num_neighbors = 0;
+
+
+			/* erruptions: add particles */
+			//TODO
+
+
+
+			//TODO: try to parallelize this more (this makes about half of the serial
+			//part, the other is the file output) ...
+			m_grid->updateEntries(m_particles);
+
 		}
 	}
 
