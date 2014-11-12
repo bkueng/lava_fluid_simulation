@@ -48,7 +48,7 @@ void Simulation::run() {
 
 	while(simulation_running) {
 
-		dfloat dt = 0.003; //TODO: dynamic??
+	dfloat dt = m_config.time_step; //TODO: dynamic??
 
 		/* erruptions: add particles */
 		//TODO
@@ -92,8 +92,8 @@ void Simulation::run() {
 		for (auto& particle : m_particles) {
 			dfloat particle_pressure = pressure(particle);
 
-			Math::Vec3f force_pressure(0.);
-			Math::Vec3f force_viscosity(0.);
+			Vec3f force_pressure(0.);
+			Vec3f force_viscosity(0.);
 			for (int i = 0; i < particle.num_neighbors; ++i) {
 				Particle* neighbor_part = particle.neighbors[i];
 
@@ -109,7 +109,7 @@ void Simulation::run() {
 			force_viscosity *= m_config.viscosity * particle_mass *
 					m_kernel_viscosity.kernelWeightLaplace();
 
-			Math::Vec3f force_gravity = particle.density*m_config.g;
+			Vec3f force_gravity = particle.density*m_config.g;
 
 			particle.forces = force_pressure + force_viscosity + force_gravity;
 		}

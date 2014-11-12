@@ -31,6 +31,7 @@ struct ErruptionConfig {
 
 struct SimulationConfig {
 	dfloat simulation_time = 60; /** total time to simulate */
+	dfloat time_step = 0.001;
 	int num_frames = -1; /** limit number of frames (-1 = no limit) */
 
 	dfloat neighbor_lookup_dist = 0.03;

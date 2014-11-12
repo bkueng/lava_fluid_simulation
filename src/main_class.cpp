@@ -255,6 +255,8 @@ void CMain::processArgs()
 		config.rho0 = (dfloat)sim_node.attribute("rho0").as_double(1000);
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
 		config.ground_spring = (dfloat)sim_node.attribute("ground_spring").as_double(100.);
+		istringstream(sim_node.attribute("gravity").as_string("0 -9.81 0")) >> config.g;
+		config.time_step = (dfloat)sim_node.attribute("time_step").as_double(0.001);
 
 		//TODO: erruptions
 
