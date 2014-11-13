@@ -25,6 +25,11 @@ field.
 The output is a RenderMan Scene File (RIB), which can be rendered with a
 RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 
+##### Example #####
+`$ ./simulator -c config/sample.xml -f 100`
+`$ ./scripts/render.sh config/sample.xml -r <pixie_bin>/rndr`
+`$ ./scripts/video.sh output/rendering/sample 20`
+
 
 Copyright 2014 Hans Hardmeier <hanshardmeier@gmail.com>
 Copyright 2014 Beat Küng <beat-kueng@gmx.net>
