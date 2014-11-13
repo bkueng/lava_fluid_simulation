@@ -26,9 +26,9 @@ The output is a RenderMan Scene File (RIB), which can be rendered with a
 RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 
 ##### Example #####
-`$ ./simulator -c config/sample.xml -f 100`
-`$ ./scripts/render.sh config/sample.xml -r <pixie_bin>/rndr`
-`$ ./scripts/video.sh output/rendering/sample 20`
+`$ ./simulator -c config/grid_simple.xml -f 100`
+`$ ./scripts/render.sh config/grid_simple.xml -r <pixie_bin>/rndr`
+`$ ./scripts/video.sh output/rendering/grid_simple 20`
 
 
 Copyright 2014 Hans Hardmeier <hanshardmeier@gmail.com>

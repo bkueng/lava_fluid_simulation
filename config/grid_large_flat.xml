@@ -1,0 +1,47 @@
+<config>
+
+	<simulation
+		simulation_time="1"
+		lookup_dist="0.005"
+		cell_size="0.005"
+		num_y_cells="100"
+		pressure_k="1000"
+		rho0="1000"
+		particle_mass="0.0072"
+		ground_spring="3000" 
+		gravity="0 -9.81 0"
+		time_step="0.0001"
+		>
+		<!-- Note: this small timestep is needed to avoid instabilities.
+			 0.0002 already produces small instabilities -->
+
+		<heightfield
+			file="data/height_field/flat.tif"
+			scaling="0.4">
+			<tiff step_x="1" step_y="1"></tiff>
+		</heightfield>
+
+		<particles_grid
+			min_pos="0.55 0.01 0.5"
+			max_pos="0.65 0.05 0.6"
+			count="40 20 40"
+			velocity="0 -0.3 0"
+			temperature="100"
+			calc_mass="true"
+			>
+		</particles_grid>
+
+
+		<erruptions>
+			<!-- list of erruptions: time, duration, particles/sec, initial speed & temperature -->
+		</erruptions>
+	</simulation>
+
+	<output
+		format="points">
+		<rendering
+			scene="data/scenes/flat_front_view.rib"
+			constantwidth="0.003">
+		</rendering>
+	</output>
+</config>

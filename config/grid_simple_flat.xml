@@ -1,20 +1,20 @@
 <config>
 
 	<simulation
-		simulation_time="60"
+		simulation_time="1"
 		lookup_dist="0.03"
 		cell_size="0.03"
 		num_y_cells="65"
 		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.0072"
-		ground_spring="100"
+		ground_spring="1000"
 		gravity="0 -9.81 0"
 		time_step="0.003"
 		>
 
 		<heightfield
-			file="data/height_field/alpine-terrain.tif"
+			file="data/height_field/flat.tif"
 			scaling="0.4">
 			<tiff step_x="1" step_y="1"></tiff>
 		</heightfield>
@@ -28,17 +28,12 @@
 			calc_mass="true"
 			>
 		</particles_grid>
-
-
-		<erruptions>
-			<!-- list of erruptions: time, duration, particles/sec, initial speed & temperature -->
-		</erruptions>
 	</simulation>
 
 	<output
 		format="points">
 		<rendering
-			scene="data/scenes/test.rib"
+			scene="data/scenes/flat.rib"
 			constantwidth="0.006">
 		</rendering>
 	</output>

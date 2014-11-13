@@ -45,7 +45,7 @@ WorldBegin
 
 		# shading rate: decrease for better quality (~0.5 or lower) & to avoid
 		# artifacts. increase for better speed
-		ShadingRate 2
+		ShadingRate 3
 		Attribute "displacementbound" "sphere" [ 0.5 ] "coordinatesystem" [ "surface" ]
 		Displacement "bumpy"
 			"uniform float amplitude" [ -0.4 ]
