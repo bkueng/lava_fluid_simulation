@@ -244,9 +244,9 @@ void CMain::processArgs()
 		SimulationConfig config;
 		xml_node config_node = doc.child("config");
 		xml_node sim_node = config_node.child("simulation");
-		xml_node output_node = config_node.child("output");
-		//xml_node general_node = config_node.child("general");
+		//xml_node output_node = config_node.child("output");
 
+		/* read the config */
 		config.simulation_time = (dfloat)sim_node.attribute("simulation_time").as_double(60);
 		config.neighbor_lookup_dist = (dfloat)sim_node.attribute("lookup_dist").as_double(0.03);
 		config.cell_size = (dfloat)sim_node.attribute("cell_size").as_double(0.03);
@@ -254,9 +254,18 @@ void CMain::processArgs()
 		config.k = (dfloat)sim_node.attribute("pressure_k").as_double(1000);
 		config.rho0 = (dfloat)sim_node.attribute("rho0").as_double(1000);
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
-		config.ground_spring = (dfloat)sim_node.attribute("ground_spring").as_double(100.);
 		istringstream(sim_node.attribute("gravity").as_string("0 -9.81 0")) >> config.g;
 		config.time_step = (dfloat)sim_node.attribute("time_step").as_double(0.001);
+		string ground_method = sim_node.attribute("ground_method").as_string("elastic");
+		if (ground_method == "elastic") {
+			config.ground_method = SimulationConfig::GroundElastic;
+		} else if (ground_method == "spring") {
+			config.ground_method = SimulationConfig::GroundForceSpring;
+			config.ground_spring = (dfloat) sim_node.attribute("ground_spring").as_double(1000.);
+		} else {
+			LOG(ERROR, "unknown ground_method (valid are: 'elastic', 'spring')");
+			return;
+		}
 
 		//TODO: erruptions
 

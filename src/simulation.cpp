@@ -130,13 +130,14 @@ void Simulation::run() {
 			Particle& particle = m_particles[particle_idx];
 			Vec3f& pos = particle.position;
 
-			//ground contact
-			dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
-			if(pos.y < height_field_val) {
-				//pos.y = height_field_val;
-				Vec3f n;
-				m_height_field.normal(pos.x, pos.z, n);
-				particle.forces += n * ((height_field_val - pos.y)*m_config.ground_spring);
+			//ground contact: spring force
+			if(m_config.ground_method == SimulationConfig::GroundForceSpring) {
+				dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
+				if(pos.y < height_field_val) {
+					Vec3f n;
+					m_height_field.normal(pos.x, pos.z, n);
+					particle.forces += n * ((height_field_val - pos.y)*m_config.ground_spring);
+				}
 			}
 
 			//symplectic euler
@@ -157,6 +158,18 @@ void Simulation::run() {
 			} else if(pos.z > m_height_field.fieldDepth()-Math::FEQ_EPS) {
 				pos.z = m_height_field.fieldDepth()-Math::FEQ_EPS;
 				particle.velocity.z = -particle.velocity.z;
+			}
+
+			//ground contact: elastic
+			if(m_config.ground_method == SimulationConfig::GroundElastic) {
+				dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
+				if(pos.y < height_field_val) {
+					Vec3f n;
+					m_height_field.normal(pos.x, pos.z, n);
+					pos.y = height_field_val + Math::FEQ_EPS;
+					//reflect velocity
+					particle.velocity = particle.velocity - (2.*dot(particle.velocity, n))*n;
+				}
 			}
 
 			//make sure no particle leaves the field in y direction

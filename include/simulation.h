@@ -49,6 +49,11 @@ struct SimulationConfig {
 
 	dfloat particle_mass = 0.0072;
 
+	enum GroundMethod {
+		GroundForceSpring = 0,
+		GroundElastic
+	};
+	GroundMethod ground_method = GroundElastic;
 	dfloat ground_spring = 100.; /** ground spring constant */
 
 	std::vector<ErruptionConfig> erruptions;

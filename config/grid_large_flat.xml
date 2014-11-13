@@ -8,6 +8,7 @@
 		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.0072"
+		ground_method="elastic"
 		ground_spring="3000" 
 		gravity="0 -9.81 0"
 		time_step="0.0001"
