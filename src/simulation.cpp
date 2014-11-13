@@ -182,11 +182,6 @@ void Simulation::run() {
 		//serial part: only one thread should update this. the others will wait
 #pragma omp single
 		{
-
-
-			/* write output */
-			writeOutput(num_timesteps_total);
-
 			simulation_time += dt;
 			++num_timesteps;
 			++num_timesteps_total;
@@ -215,11 +210,22 @@ void Simulation::run() {
 			//TODO
 
 
+		}
 
-			//TODO: try to parallelize this more (this makes about half of the serial
-			//part, the other is the file output) ...
-			m_grid->updateEntries(m_particles);
-
+		//the following sections can be done in parallel
+#pragma omp sections
+		{
+#pragma omp section
+			{
+				/* write output */
+				writeOutput(num_timesteps_total-1);
+			}
+#pragma omp section
+			{
+				//TODO: try to parallelize this more (this makes about half of the serial
+				//part, the other is the file output) ...
+				m_grid->updateEntries(m_particles);
+			}
 		}
 	}
 
