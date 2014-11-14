@@ -2,6 +2,7 @@
 
 	<simulation
 		simulation_time="1"
+		output_rate="1"
 		lookup_dist="0.03"
 		cell_size="0.03"
 		num_y_cells="65"

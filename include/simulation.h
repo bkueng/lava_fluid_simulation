@@ -60,6 +60,7 @@ struct SimulationConfig {
 
 	/* output */
 	std::string output_dir; /** output directory without ending '/' */
+	int output_rate = 1; /** write output data every x timestep */
 };
 
 /**

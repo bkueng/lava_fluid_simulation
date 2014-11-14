@@ -256,6 +256,7 @@ void CMain::processArgs()
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
 		istringstream(sim_node.attribute("gravity").as_string("0 -9.81 0")) >> config.g;
 		config.time_step = (dfloat)sim_node.attribute("time_step").as_double(0.001);
+		config.output_rate = (int)sim_node.attribute("output_rate").as_int(1);
 		string ground_method = sim_node.attribute("ground_method").as_string("elastic");
 		if (ground_method == "elastic") {
 			config.ground_method = SimulationConfig::GroundElastic;

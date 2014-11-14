@@ -187,7 +187,8 @@ void Simulation::run() {
 			++num_timesteps_total;
 
 			simulation_running = simulation_time < m_config.simulation_time &&
-					(m_config.num_frames == -1 || num_timesteps_total < m_config.num_frames);
+					(m_config.num_frames == -1 || num_timesteps_total
+						< m_config.num_frames * m_config.output_rate);
 
 			/* statistics */
 			int64_t cur_time = getTickCount();
@@ -218,7 +219,9 @@ void Simulation::run() {
 #pragma omp section
 			{
 				/* write output */
-				writeOutput(num_timesteps_total-1);
+				if ((num_timesteps_total - 1) % m_config.output_rate == 0) {
+					writeOutput((num_timesteps_total - 1) / m_config.output_rate);
+				}
 			}
 #pragma omp section
 			{
@@ -229,7 +232,8 @@ void Simulation::run() {
 		}
 	}
 
-	printf("Done: calculated %i timesteps\n", num_timesteps_total);
+	printf("Done: calculated %i timesteps, wrote %i files\n", num_timesteps_total,
+			num_timesteps_total/m_config.output_rate);
 }
 
 inline void Simulation::addParticle(const Math::Vec3f& position,
