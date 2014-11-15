@@ -248,7 +248,11 @@ void CMain::processArgs()
 
 		/* read the config */
 		config.simulation_time = (dfloat)sim_node.attribute("simulation_time").as_double(60);
-		config.neighbor_lookup_dist = (dfloat)sim_node.attribute("lookup_dist").as_double(0.03);
+		config.smoothing_kernel_size = (dfloat)sim_node.attribute("smoothing_kernel_size").as_double(0.03);
+		config.neighbor_lookup_dist =
+			(dfloat)sim_node.attribute("lookup_dist").as_double(config.smoothing_kernel_size);
+		if(config.neighbor_lookup_dist < config.smoothing_kernel_size)
+			THROW_s(EINVALID_PARAMETER, "Config Error: lookup_dist < smoothing_kernel_size");
 		config.cell_size = (dfloat)sim_node.attribute("cell_size").as_double(config.neighbor_lookup_dist);
 		config.num_y_cells = sim_node.attribute("num_y_cells").as_int(20);
 		config.k = (dfloat)sim_node.attribute("pressure_k").as_double(1000);

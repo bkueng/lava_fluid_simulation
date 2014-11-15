@@ -3,8 +3,8 @@
 	<simulation
 		simulation_time="1"
 		output_rate="1"
-		lookup_dist="0.005"
-		cell_size="0.005"
+		smoothing_kernel_size="0.005"
+		lookup_dist="0.00545"
 		num_y_cells="200"
 		pressure_k="1000"
 		rho0="1000"

@@ -34,9 +34,14 @@ struct SimulationConfig {
 	dfloat time_step = 0.001;
 	int num_frames = -1; /** limit number of frames (-1 = no limit) */
 
-	dfloat neighbor_lookup_dist = 0.03;
-
-	dfloat cell_size = 0.03; /** cell size in [0,1] space */
+	dfloat smoothing_kernel_size = 0.03; /** the kernel size for smoothing neighbor
+				particles. should be such that avg neighbors is within ~30-40 */
+	dfloat neighbor_lookup_dist = 0.03; /** must be >= smoothing_kernel_size.
+				this defines the max lookup distance for neighbor search.
+				a greater distance means the same set of neighbors can be used
+				for multiple timesteps, which improves performance */
+	dfloat cell_size = 0.03; /** 3D grid cell size in [0,1] space (normally set
+				equal to neighbor_lookup_dist) */
 	int num_y_cells = 65; /** number of cells in y direction: increase this for smaller cell_size! */
 
 	//pressure constants

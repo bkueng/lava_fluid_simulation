@@ -21,7 +21,7 @@ Pixie:
 
 #### Usage ####
 Input is an XML scene configuration file under config/ together with a height
-field.
+field (see include/simulation.h for documentation of the config parameters).
 The output is a RenderMan Scene File (RIB), which can be rendered with a
 RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 
@@ -29,6 +29,13 @@ RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 `$ ./simulator -c config/grid_simple.xml -f 100`
 `$ ./scripts/render.sh config/grid_simple.xml -r <pixie_bin>/rndr`
 `$ ./scripts/video.sh output/rendering/grid_simple 20`
+
+#### Configuration ####
+How to setup configuraton parameters:
+* Set `lookup_dist` equal to `smoothing_kernel_size`, then make sure that the
+  simulation has around 30-40 average neighbors (avg\_nei).
+* Then slightly increase the `lookup_dist` to have around 20% neighbor list
+  updates (nei\_upd) for optimal performance.
 
 
 Copyright 2014 Hans Hardmeier <hanshardmeier@gmail.com>

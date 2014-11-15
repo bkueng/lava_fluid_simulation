@@ -22,9 +22,9 @@ using namespace Math;
 
 Simulation::Simulation(HeightField& height_field, const SimulationConfig& config)
 	: m_config(config), m_height_field(height_field),
-	m_kernel(config.neighbor_lookup_dist),
-	m_kernel_pressure(config.neighbor_lookup_dist),
-	m_kernel_viscosity(config.neighbor_lookup_dist) {
+	m_kernel(config.smoothing_kernel_size),
+	m_kernel_pressure(config.smoothing_kernel_size),
+	m_kernel_viscosity(config.smoothing_kernel_size) {
 
 	m_grid = new Grid<Particle>(height_field, config.cell_size, config.num_y_cells);
 }
@@ -37,10 +37,16 @@ void Simulation::run() {
 	initOutput();
 
 	dfloat simulation_time = 0;
-	int num_timesteps = 0;
+	int num_timesteps_statistics = 0;
+	int num_neighbor_updates_statistics = 1;
 	int num_timesteps_total = 0;
 	int64_t start_time = getTickCount();
 	dfloat particle_mass = m_config.particle_mass;
+	dfloat max_velocity_dt = 0; /* max position change of a particle */
+	dfloat smoothing_kernel_size2 = m_config.smoothing_kernel_size
+			* m_config.smoothing_kernel_size;
+	dfloat cur_neighbors_dist = m_config.neighbor_lookup_dist;
+	bool need_neighbors_update = true;
 
 	const int min_neighbors_array_size = 500;
 	MemoryPool<Particle*> memory_pool(min_neighbors_array_size);
@@ -59,27 +65,30 @@ void Simulation::run() {
 
 		/* neighbor search */
 		long local_total_neighbors=0;
+		if (need_neighbors_update) {
 #pragma omp for schedule(dynamic, chunk_size)
-		for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
-			Particle& particle = m_particles[particle_idx];
-			int num_neighbors = 0;
-			Particle** neighbor_array = memory_pool.next();
-			particle.neighbors = neighbor_array;
+			for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
+				Particle& particle = m_particles[particle_idx];
+				int num_neighbors = 0, num_neighbors_statistics = 0;
+				Particle** neighbor_array = memory_pool.next();
+				particle.neighbors = neighbor_array;
 
-			auto neighbor_cb = [&](Particle* neighbor, dfloat dist2) {
-				DEBUG_ASSERT1(num_neighbors < min_neighbors_array_size);
-				neighbor_array[num_neighbors++] = neighbor;
-			};
-			m_grid->iterateNeighbors(particle.position,
-					m_config.neighbor_lookup_dist, neighbor_cb);
+				auto neighbor_cb = [&](Particle* neighbor, dfloat dist2) {
+					DEBUG_ASSERT1(num_neighbors < min_neighbors_array_size);
+					neighbor_array[num_neighbors++] = neighbor;
+					if (dist2 < smoothing_kernel_size2) ++num_neighbors_statistics;
+				};
+				m_grid->iterateNeighbors(particle.position,
+						m_config.neighbor_lookup_dist, neighbor_cb);
 
-			memory_pool.setNumUsedElements(num_neighbors);
-			particle.num_neighbors = num_neighbors;
-			local_total_neighbors += num_neighbors;
+				memory_pool.setNumUsedElements(num_neighbors);
+				particle.num_neighbors = num_neighbors;
+				local_total_neighbors += num_neighbors_statistics;
+			}
+#pragma omp atomic
+			global_num_neighbors += local_total_neighbors;
 		}
 
-#pragma omp atomic
-		global_num_neighbors += local_total_neighbors;
 
 
 		/* density update */
@@ -125,7 +134,8 @@ void Simulation::run() {
 
 
 		/* update positions, velocities & handle collisions */
-#pragma omp for schedule(dynamic, chunk_size)
+		dfloat local_max_velocity2 = 0;
+#pragma omp for schedule(dynamic, chunk_size) nowait
 		for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
 			Particle& particle = m_particles[particle_idx];
 			Vec3f& pos = particle.position;
@@ -143,6 +153,10 @@ void Simulation::run() {
 			//symplectic euler
 			particle.velocity += dt * particle.forces / particle.density;
 			particle.position += dt * particle.velocity;
+
+			dfloat velocity2 = particle.velocity.length2();
+			if(velocity2 > local_max_velocity2) local_max_velocity2 = velocity2;
+
 
 			//grid boundaries: assume perfect elastic (should not occur anyway)
 			if(pos.x < Math::FEQ_EPS) {
@@ -178,12 +192,24 @@ void Simulation::run() {
 			m_grid->moveInsideGrid(pos);
 		}
 
+		//reduce max displacement from each thread
+		dfloat local_max_velocity_dt = sqrt(local_max_velocity2) * dt;
+		if (local_max_velocity_dt > max_velocity_dt) {
+#pragma omp critical
+			{
+				if (local_max_velocity_dt > max_velocity_dt)
+					max_velocity_dt = local_max_velocity_dt;
+			}
+		}
+#pragma omp flush(max_velocity_dt)
+#pragma omp barrier /* wait until max_velocity_dt is updated by all threads */
+
 
 		//serial part: only one thread should update this. the others will wait
 #pragma omp single
 		{
 			simulation_time += dt;
-			++num_timesteps;
+			++num_timesteps_statistics;
 			++num_timesteps_total;
 
 			simulation_running = simulation_time < m_config.simulation_time &&
@@ -195,23 +221,37 @@ void Simulation::run() {
 			double elapsed_time = getTickSeconds(cur_time-start_time);
 			if(elapsed_time >= 1. || !simulation_running) {
 				int avg_neighbors = (int)(global_num_neighbors / m_particles.size());
-				printf("particles:%6i, time:%7.3f / %.3f, steps:%6.2f/s (%4.0fms/step), avg_neighbors:%3i\n",
+				printf("#ele:%6i, T:%7.3f / %.3f, steps:%6.2f/s (%4.0fms/step), avg_nei:%3i, nei_upd:%2i%%\n",
 						(int)m_particles.size(), (float)simulation_time,
 						(float)m_config.simulation_time,
-						(float)num_timesteps / elapsed_time,
-						(float)elapsed_time/num_timesteps*1000.f,
-						avg_neighbors);
+						(float)num_timesteps_statistics / elapsed_time,
+						(float)elapsed_time/num_timesteps_statistics*1000.f,
+						avg_neighbors,
+						100*num_neighbor_updates_statistics/num_timesteps_statistics);
 				start_time = cur_time;
-				num_timesteps = 0;
+				num_timesteps_statistics = 0;
+				num_neighbor_updates_statistics = 0;
 			}
-			global_num_neighbors = 0;
+
+			//is neighbor update needed?
+			cur_neighbors_dist -= 2. * max_velocity_dt;
+			max_velocity_dt = 0;
+			need_neighbors_update = cur_neighbors_dist < m_config.smoothing_kernel_size;
 
 
 			/* erruptions: add particles */
 			//TODO
+			// if added/removed -> need_neighbors_update = true;
 
 
+			if (need_neighbors_update) {
+				global_num_neighbors = 0;
+				cur_neighbors_dist = m_config.neighbor_lookup_dist;
+				++num_neighbor_updates_statistics;
+			}
 		}
+#pragma omp flush(need_neighbors_update)
+
 
 		//the following sections can be done in parallel
 #pragma omp sections
@@ -227,7 +267,8 @@ void Simulation::run() {
 			{
 				//TODO: try to parallelize this more (this makes about half of the serial
 				//part, the other is the file output) ...
-				m_grid->updateEntries(m_particles);
+				if (need_neighbors_update)
+					m_grid->updateEntries(m_particles);
 			}
 		}
 	}

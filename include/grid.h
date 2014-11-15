@@ -155,7 +155,6 @@ void Grid<Entry>::updateEntries(Iterable& entries) {
 template<class Entry>
 inline void Grid<Entry>::iterateNeighbors(const Math::Vec3f& position,
 		dfloat max_dist, const std::function<void(Entry*, dfloat)>& callback) const {
-	//TODO: enlarge max_dist if result is used for multiple timesteps!
 
 	int x_min, y_min, z_min, x_max, y_max, z_max;
 	dfloat max_dist2 = max_dist*max_dist;
