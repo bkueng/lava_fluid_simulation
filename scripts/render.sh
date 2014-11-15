@@ -4,8 +4,8 @@
 # simulator
 
 old_pwd="`pwd`"
-config_file="$(readlink -f $1 2>/dev/null)"
-cd "$(dirname $(readlink -f $0))"
+config_file="$(realpath $1 2>/dev/null)"
+pushd "`dirname $0`" > /dev/null
 script_name="$0"
 #we want to work in the project root directory
 cd ..

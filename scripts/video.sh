@@ -1,6 +1,8 @@
 #! /bin/sh
 
-script_dir="$(dirname $(readlink -f $0))"
+pushd "`dirname $0`" > /dev/null
+script_dir="`pwd`"
+popd > /dev/null
 
 if [ "$#" -lt 1 -o "$#" -gt 3 ]
 then
