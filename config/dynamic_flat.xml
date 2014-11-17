@@ -1,0 +1,124 @@
+<config>
+
+	<simulation
+		simulation_time="0.8"
+		output_rate="3"
+		smoothing_kernel_size="0.008"
+		lookup_dist="0.0085"
+		num_y_cells="100"
+		pressure_k="1000"
+		rho0="1000"
+		particle_mass="0.000012"
+		ground_method="elastic"
+		ground_spring="3000" 
+		gravity="0 -9.81 0"
+		time_step="0.0001"
+
+		init_velocity_perturb_angle="10"
+		viscosity_coeff_a="0.002"
+		viscosity_coeff_b="2"
+		>
+
+		<heightfield
+			file="data/height_field/flat.tif"
+			scaling="0.4">
+			<tiff step_x="1" step_y="1"></tiff>
+		</heightfield>
+
+		<erruptions>
+			<!-- 3 straight lines on top of each other
+				 (moving from right to left) -->
+			<erruption
+				start_time="0"
+				duration="0.11"
+				particles_per_sec="10000"
+				init_temperature="1000"
+				init_velocity="0 0.2 -0.8"
+				>
+				<source-line
+					start="0.55 0.7"
+					end="0.65 0.7"
+					y_offset="0.056"
+					></source-line>
+			</erruption>
+			<erruption
+				start_time="0"
+				duration="0.13"
+				particles_per_sec="10000"
+				init_temperature="1000"
+				init_velocity="0 0.2 -0.8"
+				>
+				<source-line
+					start="0.55 0.7"
+					end="0.65 0.7"
+					y_offset="0.053"
+					></source-line>
+			</erruption>
+			<erruption
+				start_time="0"
+				duration="0.15"
+				particles_per_sec="10000"
+				init_temperature="1000"
+				init_velocity="0 0.2 -0.8"
+				>
+				<source-line
+					start="0.55 0.7"
+					end="0.65 0.7"
+					y_offset="0.05"
+					></source-line>
+			</erruption>
+
+
+			<!-- 3 straight lines on top of each other
+				 (moving from left to right, with higher speed) -->
+
+			<erruption
+				start_time="0"
+				duration="0.11"
+				particles_per_sec="10000"
+				init_temperature="1000"
+				init_velocity="0 0.2 1.5"
+				>
+				<source-line
+					start="0.55 0.35"
+					end="0.65 0.35"
+					y_offset="0.056"
+					></source-line>
+			</erruption>
+			<erruption
+				start_time="0"
+				duration="0.13"
+				particles_per_sec="10000"
+				init_temperature="1000"
+				init_velocity="0 0.2 1.5"
+				>
+				<source-line
+					start="0.55 0.35"
+					end="0.65 0.35"
+					y_offset="0.053"
+					></source-line>
+			</erruption>
+			<erruption
+				start_time="0"
+				duration="0.15"
+				particles_per_sec="10000"
+				init_temperature="1000"
+				init_velocity="0 0.2 1.5"
+				>
+				<source-line
+					start="0.55 0.35"
+					end="0.65 0.35"
+					y_offset="0.05"
+					></source-line>
+			</erruption>
+		</erruptions>
+	</simulation>
+
+	<output
+		format="points">
+		<rendering
+			scene="data/scenes/flat.rib"
+			constantwidth="0.003">
+		</rendering>
+	</output>
+</config>
