@@ -226,7 +226,9 @@ void Simulation::run() {
 			int64_t cur_time = getTickCount();
 			double elapsed_time = getTickSeconds(cur_time-start_time);
 			if(elapsed_time >= 1. || !simulation_running) {
-				int avg_neighbors = (int)(global_num_neighbors / m_particles.size());
+				int avg_neighbors = 0;
+				if (m_particles.size() > 0)
+					avg_neighbors = (int) (global_num_neighbors / m_particles.size());
 				printf("#ele:%6i, T:%7.3f / %.3f, steps:%6.2f/s (%4.0fms/step), avg_nei:%3i, nei_upd:%2i%%\n",
 						(int)m_particles.size(), (float)simulation_time,
 						(float)m_config.simulation_time,
@@ -319,9 +321,11 @@ void Simulation::writeOutput(int frame) {
 		if(particle.density > max_density) max_density = particle.density;
 		if(particle.density < min_density) min_density = particle.density;
 	}
+	dfloat density_span = max_density - min_density;
+	if (density_span < Math::FEQ_EPS) density_span = 1;
 	for(const auto& particle : m_particles) {
 		float r = 1;
-		float g = (particle.density-min_density)/(max_density-min_density);
+		float g = (particle.density-min_density)/density_span;
 		float b = 0;
 		fprintf(file, "%.3f %.3f %.3f ", r, g, b);
 	}
