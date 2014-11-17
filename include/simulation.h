@@ -91,9 +91,11 @@ struct SimulationConfig {
 	dfloat k = 1000; /** stiffness parameter: higher stiffness needs smaller timesteps */
 	dfloat rho0 = 1000; /** rest density of a particle */
 
-	Math::Vec3f g = Math::Vec3f(0, -0.981, 0); /** gravity acceleration */
+	dfloat viscosity_coeff_a = 0.002;
+	dfloat viscosity_coeff_b = 10; /** temperature T to viscosity vi formula:
+				vi = b*exp(-a*T). a,b > 0. a smaller = flatter curve */
 
-	dfloat viscosity = 1; //TODO: make temp-dependent
+	Math::Vec3f g = Math::Vec3f(0, -9.81, 0); /** gravity acceleration */
 
 	dfloat particle_mass = 0.0072;
 
@@ -147,10 +149,14 @@ private:
 	inline void addParticle(const Math::Vec3f& position, const Math::Vec3f& velocity,
 			dfloat temperature);
 
-	inline dfloat pressure(const Particle& particle) {
+	inline dfloat pressure(const Particle& particle) const {
 		return std::max((dfloat)0., m_config.k * (particle.density - m_config.rho0));
 	}
 
+	inline dfloat viscosity(const Particle& particle) const {
+		return m_config.viscosity_coeff_b *
+				exp(-m_config.viscosity_coeff_a * particle.temperature);
+	}
 
 	/**
 	 * @param try_to_defer     try not to add any particles in this step, but

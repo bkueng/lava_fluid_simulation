@@ -130,7 +130,7 @@ void Simulation::run() {
 					neighbor_part->density);
 			}
 			force_pressure *= -0.5 * particle_mass * m_kernel_pressure.kernelWeightGrad();
-			force_viscosity *= m_config.viscosity * particle_mass *
+			force_viscosity *= viscosity(particle) * particle_mass *
 					m_kernel_viscosity.kernelWeightLaplace();
 
 			Vec3f force_gravity = particle.density*m_config.g;

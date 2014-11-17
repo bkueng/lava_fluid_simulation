@@ -258,6 +258,8 @@ void CMain::processArgs()
 		config.k = (dfloat)sim_node.attribute("pressure_k").as_double(1000);
 		config.rho0 = (dfloat)sim_node.attribute("rho0").as_double(1000);
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
+		config.viscosity_coeff_a = (dfloat)sim_node.attribute("viscosity_coeff_a").as_double(0.002);
+		config.viscosity_coeff_b = (dfloat)sim_node.attribute("viscosity_coeff_b").as_double(10);
 		istringstream(sim_node.attribute("gravity").as_string("0 -9.81 0")) >> config.g;
 		config.time_step = (dfloat)sim_node.attribute("time_step").as_double(0.001);
 		config.init_velocity_perturb_angle = (dfloat)sim_node.attribute(
