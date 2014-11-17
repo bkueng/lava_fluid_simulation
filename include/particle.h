@@ -23,10 +23,10 @@ struct Particle {
 	Math::Vec3f position; /** in [0,1] coordinate space */
 	Math::Vec3f velocity;
 
+	dfloat temperature;
+
 	dfloat density;
 	Math::Vec3f forces; /** sum of all forces */
-
-	dfloat temperature;
 
 	Particle* next_in_grid = NULL; /** linked list of particles in a grid cell */
 

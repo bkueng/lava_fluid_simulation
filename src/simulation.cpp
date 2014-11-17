@@ -15,10 +15,14 @@
 #include "simulation.h"
 #include "timer.h"
 #include "memory_pool.h"
+#include "Math/Rand.h"
+#include "Math/Warp.h"
 
 #include <cstdio>
+#include <algorithm>
 
 using namespace Math;
+using namespace std;
 
 Simulation::Simulation(HeightField& height_field, const SimulationConfig& config)
 	: m_config(config), m_height_field(height_field),
@@ -27,6 +31,8 @@ Simulation::Simulation(HeightField& height_field, const SimulationConfig& config
 	m_kernel_viscosity(config.smoothing_kernel_size) {
 
 	m_grid = new Grid<Particle>(height_field, config.cell_size, config.num_y_cells);
+	sort(m_config.erruptions.begin(), m_config.erruptions.end());
+	m_rand.init(0);
 }
 Simulation::~Simulation() {
 	if (m_grid) delete (m_grid);
@@ -240,8 +246,8 @@ void Simulation::run() {
 
 
 			/* erruptions: add particles */
-			//TODO
-			// if added/removed -> need_neighbors_update = true;
+			if (handleErruptions(simulation_time, dt, !need_neighbors_update))
+				need_neighbors_update = true;
 
 
 			if (need_neighbors_update) {
@@ -346,4 +352,67 @@ void Simulation::addParticlesOnGrid(const Math::Vec3f& min_pos,
 		m_config.particle_mass = dx * dy * dz * m_config.rho0;
 		printf("Particle Mass=%lf\n", m_config.particle_mass);
 	}
+}
+
+bool Simulation::handleErruptions(dfloat simulation_time, dfloat dt, bool try_to_defer) {
+	bool changed_particles = false;
+
+	//new active
+	auto& erruptions = m_config.erruptions;
+	while (!erruptions.empty() && erruptions.back().start_time <= simulation_time) {
+		m_active_erruptions.push_back(erruptions.back());
+		erruptions.pop_back();
+		LOG(DEBUG, "Starting Erruption");
+	}
+	int deferred = 0;
+	if (try_to_defer && m_deferred_erruption_steps < m_max_deferred_erruption_steps)
+		++deferred;
+
+	//iterate active & check finished
+	for (auto active = m_active_erruptions.begin(); active != m_active_erruptions.end(); ) {
+		if (active->start_time + active->duration < simulation_time) {
+			active = m_active_erruptions.erase(active);
+			LOG(DEBUG, "Ending Erruption");
+		} else {
+			//add particles if necessary
+			if (deferred > 0) {
+				active->particles_left += dt * active->particles_per_sec;
+				++deferred;
+			} else {
+				dfloat num_particles = dt * active->particles_per_sec
+						+ active->particles_left;
+				int inum_particles = (int)num_particles;
+				active->particles_left = num_particles - (dfloat)inum_particles;
+				for (int i = 0; i < inum_particles; ++i) {
+					dfloat u = m_rand.nextf(), v = m_rand.nextf();
+					Vec3f position, velocity;
+					position = active->source->getPosition(m_height_field, u, v);
+					velocity = active->init_velocity;
+					if (m_config.init_velocity_perturb_angle > 0.) {
+						dfloat angle = m_rand.nextf()
+								* m_config.init_velocity_perturb_angle * (M_PI / 180.);
+						Vec3f dir;
+						Warp::uniformSphere(&dir, m_rand.nextf(), m_rand.nextf());
+						velocity.rotate(angle, dir);
+					}
+					addParticle(position, velocity, active->init_temperature);
+				}
+				changed_particles = true;
+			}
+			++active;
+		}
+	}
+	if (deferred > 1) ++m_deferred_erruption_steps;
+	else m_deferred_erruption_steps = 0;
+
+	return changed_particles;
+}
+
+Math::Vec3f ErruptionSourceLineSegment::getPosition(
+		const HeightField& height_field, dfloat u, dfloat v) {
+	Vec3f pos;
+	pos.x = Math::lerp(m_start.x, m_end.x, u);
+	pos.z = Math::lerp(m_start.y, m_end.y, u);
+	pos.y = height_field.lookup(pos.x, pos.z) + Math::FEQ_EPS + m_y_offset;
+	return pos;
 }
