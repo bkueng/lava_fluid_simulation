@@ -110,7 +110,8 @@ height_scaling_larger=`echo "$height_scaling 0.1" | awk '{printf "%f", $1 + $2}'
 
 echo "Using Scene file: $scene_file"
 
-scene_file_tmp="${scene_file}.tmp"
+randpm=$(awk 'BEGIN { srand(); printf ("%d\n", int(rand()*9999)+1); }')
+scene_file_tmp="${scene_file}_${randpm}.tmp"
 cp "$scene_file" "$scene_file_tmp"
 
 
