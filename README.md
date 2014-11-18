@@ -30,12 +30,21 @@ RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 `$ ./scripts/render.sh config/grid_simple.xml -r <pixie_bin>/rndr`
 `$ ./scripts/video.sh output/rendering/grid_simple 20`
 
-#### Configuration ####
+##### Configuration #####
 How to setup configuraton parameters:
 * Set `lookup_dist` equal to `smoothing_kernel_size`, then make sure that the
   simulation has around 30-40 average neighbors (avg\_nei).
 * Then slightly increase the `lookup_dist` to have around 20% neighbor list
   updates (nei\_upd) for optimal performance.
+
+
+#### Literature ####
+Parts of the implementation are based on these papers:
+* Particle-Based Fluid Simulation for Interactive Applications, Matthias Mueller
+  et al., 2003
+* Animating Lava Flows, Dan Stora et al., 1999
+* Numerical simulation of lava flow using a GPU SPH model, Alexis Herault et
+  al., 2011
 
 
 Copyright 2014 Hans Hardmeier <hanshardmeier@gmail.com>
