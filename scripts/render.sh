@@ -52,8 +52,8 @@ render() {
 	file="$2"
 	file_name="$(basename -s .rib "$file")"
 	frame_nr="${file_name:6}"
-	sed -i "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
-	sed -i "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp"
+	sed -i.tmp "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
+	sed -i.tmp "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp"
 	echo "Rendering $file"
 	$renderer "$scene_file_tmp"
 }
@@ -115,13 +115,13 @@ cp "$scene_file" "$scene_file_tmp"
 
 
 # replace directories
-sed -i "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
+sed -i.tmp "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
 # escape the path (-> or better use awk?)
 height_field_file_esc="$(echo "$height_field_file" | sed -e 's/[\/&]/\\&/g')"
-sed -i "s/HEIGHT_FIELD_FILE/${height_field_file_esc}/g" "$scene_file_tmp"
-sed -i 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
-sed -i 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
-sed -i 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
+sed -i.tmp "s/HEIGHT_FIELD_FILE/${height_field_file_esc}/g" "$scene_file_tmp"
+sed -i.tmp 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
+sed -i.tmp 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
+sed -i.tmp 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
 
 # iterate frames & render
 if [ "$frames" = "" ]; then
@@ -135,5 +135,5 @@ else
 	done
 fi
 
-rm "$scene_file_tmp"
+rm "$scene_file_tmp" "$scene_file_tmp".tmp
 
