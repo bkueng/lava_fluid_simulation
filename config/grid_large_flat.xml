@@ -12,6 +12,7 @@
 		ground_spring="3000" 
 		gravity="0 -9.81 0"
 		time_step="0.0001"
+		surface_air_threshold="0.4"
 		>
 		<!-- Note: this small timestep is needed to avoid instabilities.
 			 0.0002 already produces small instabilities -->
@@ -32,14 +33,11 @@
 			>
 		</particles_grid>
 
-
-		<erruptions>
-			<!-- list of erruptions: time, duration, particles/sec, initial speed & temperature -->
-		</erruptions>
 	</simulation>
 
 	<output
-		format="points">
+		format="points"
+		color="surface">
 		<rendering
 			scene="data/scenes/flat_front_view.rib"
 			constantwidth="0.003">

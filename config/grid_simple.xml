@@ -12,6 +12,7 @@
 		ground_spring="3000"
 		gravity="0 -9.81 0"
 		time_step="0.0001"
+		surface_air_threshold="0.25"
 		>
 
 		<heightfield
@@ -30,14 +31,11 @@
 			>
 		</particles_grid>
 
-
-		<erruptions>
-			<!-- list of erruptions: time, duration, particles/sec, initial speed & temperature -->
-		</erruptions>
 	</simulation>
 
 	<output
-		format="points">
+		format="points"
+		color="density">
 		<rendering
 			scene="data/scenes/alpine.rib"
 			constantwidth="0.006">

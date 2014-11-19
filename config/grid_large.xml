@@ -12,6 +12,7 @@
 		ground_method="elastic"
 		ground_spring="3000"
 		gravity="0 -9.81 0"
+		surface_air_threshold="0.4"
 		time_step="0.0001"
 		>
 		<!-- Note: this small timestep is needed to avoid instabilities.
@@ -33,14 +34,11 @@
 			>
 		</particles_grid>
 
-
-		<erruptions>
-			<!-- list of erruptions: time, duration, particles/sec, initial speed & temperature -->
-		</erruptions>
 	</simulation>
 
 	<output
-		format="points">
+		format="points"
+		color="density">
 		<rendering
 			scene="data/scenes/alpine.rib"
 			constantwidth="0.003">
