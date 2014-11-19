@@ -95,6 +95,17 @@ struct SimulationConfig {
 	dfloat viscosity_coeff_b = 10; /** temperature T to viscosity vi formula:
 				vi = b*exp(-a*T). a,b > 0. a smaller = flatter curve */
 
+	dfloat temperature_diffusion_coeff = 90000; /** diffusion coefficient inside volume */
+	dfloat temperature_air = 20; /** constant air temperature in degrees */
+	dfloat temperature_ground = 10;
+
+	dfloat surface_air_threshold = 0.4; /** threshold to determine whether a particle
+				is at the surface (to the air). [0, 1], lower value means less surface
+				particles (best values in [0.1, 0.5]. use 'color="surface"' to validate */
+	dfloat surface_ground_radius_factor = 0.1; /** defines how far away a
+				particle can be from the ground, and still be considered to touch it.
+				max distance from ground is = surface_ground_radius_factor * particle_radius */
+
 	Math::Vec3f g = Math::Vec3f(0, -9.81, 0); /** gravity acceleration */
 
 	dfloat particle_mass = 0.0072;
@@ -103,8 +114,8 @@ struct SimulationConfig {
 				velocity of an errupted particle by maximally this angle (in degrees) */
 
 	enum GroundMethod {
-		GroundForceSpring = 0,
-		GroundElastic
+		GroundForceSpring = 0, /** "spring" */
+		GroundElastic          /** "elastic" */
 	};
 	GroundMethod ground_method = GroundElastic;
 	dfloat ground_spring = 1000.; /** ground spring constant */
@@ -114,6 +125,13 @@ struct SimulationConfig {
 	/* output */
 	std::string output_dir; /** output directory without ending '/' */
 	int output_rate = 1; /** write output data every x timestep */
+	enum OutputColor {
+		ColorDensity = 0,  /** "density" */
+		ColorTemperature,  /** "temperature" (lowest=blue, middle=green, highest=red) */
+		ColorSurface       /** "surface" indicate whether particles are on
+							   ground and/or on surface */
+	};
+	OutputColor output_color = ColorDensity;
 };
 
 /**
@@ -180,6 +198,9 @@ private:
 	KernelPoly6 m_kernel;
 	KernelSpiky m_kernel_pressure;
 	KernelViscosity m_kernel_viscosity;
+
+	dfloat m_particle_radius = 0.;
+	dfloat m_max_temperature = 0.;
 
 	std::list<ErruptionConfig> m_active_erruptions;
 	int m_deferred_erruption_steps = 0;

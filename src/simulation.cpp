@@ -33,6 +33,10 @@ Simulation::Simulation(HeightField& height_field, const SimulationConfig& config
 	m_grid = new Grid<Particle>(height_field, config.cell_size, config.num_y_cells);
 	sort(m_config.erruptions.begin(), m_config.erruptions.end());
 	m_rand.init(0);
+	for (auto& erruption : m_config.erruptions) {
+		if (erruption.init_temperature > m_max_temperature)
+			m_max_temperature = erruption.init_temperature;
+	}
 }
 Simulation::~Simulation() {
 	if (m_grid) delete (m_grid);
@@ -42,12 +46,19 @@ void Simulation::run() {
 
 	initOutput();
 
+	/* global particle attributes */
+	dfloat particle_mass = m_config.particle_mass;
+	m_particle_radius = pow(particle_mass / m_config.rho0 * 3./4./M_PI, 1./3.);
+
+	printf("Particle mass: %f, radius: %f, max temperature: %.1f\n",
+			particle_mass, m_particle_radius, m_max_temperature);
+
+	dfloat max_ground_distance = m_particle_radius * m_config.surface_ground_radius_factor;
 	dfloat simulation_time = 0;
 	int num_timesteps_statistics = 0;
 	int num_neighbor_updates_statistics = 1;
 	int num_timesteps_total = 0;
 	int64_t start_time = getTickCount();
-	dfloat particle_mass = m_config.particle_mass;
 	dfloat max_velocity_dt = 0; /* max position change of a particle */
 	dfloat smoothing_kernel_size2 = m_config.smoothing_kernel_size
 			* m_config.smoothing_kernel_size;
@@ -60,7 +71,7 @@ void Simulation::run() {
 	long global_num_neighbors = 0; /** total number of neighbors including all threads */
 	const int chunk_size = 1000; /** amount of particles to iterate per chunk for each thread */
 
-	dfloat dt = m_config.time_step; //TODO: dynamic??
+	dfloat dt = m_config.time_step;
 
 	m_grid->updateEntries(m_particles);
 
@@ -118,17 +129,43 @@ void Simulation::run() {
 
 			Vec3f force_pressure(0.);
 			Vec3f force_viscosity(0.);
+			Vec3f mass_density_gradient(0.); /* direction of highest neighbor mass */
+			dfloat dtemperature = 0.;
 			for (int i = 0; i < particle.num_neighbors; ++i) {
 				Particle* neighbor_part = particle.neighbors[i];
 
+				Vec3f gradient = m_kernel_pressure.evalGrad(
+						particle.position, neighbor_part->position);
 				force_pressure += ((particle_pressure + pressure(*neighbor_part)) /
-					neighbor_part->density) *
-					m_kernel_pressure.evalGrad(particle.position, neighbor_part->position);
+					neighbor_part->density) * gradient;
 
+				dfloat laplacian_weight = m_kernel_viscosity.evalLaplace(
+						particle.position, neighbor_part->position);
 				force_viscosity += (neighbor_part->velocity - particle.velocity) *
-					(m_kernel_viscosity.evalLaplace(particle.position, neighbor_part->position) /
-					neighbor_part->density);
+					(laplacian_weight / neighbor_part->density);
+
+				dtemperature += (neighbor_part->temperature - particle.temperature) *
+						(laplacian_weight / neighbor_part->density);
+				mass_density_gradient += gradient;
 			}
+			mass_density_gradient *= particle_mass * m_kernel_pressure.kernelWeightGrad();
+			//surface particles: count number of particles on the half-space
+			//pointed to by the negative mass_density_gradient
+			int num_neighbors = 0, num_neighbors_half_space = 0;
+			for (int i = 0; i < particle.num_neighbors; ++i) {
+				Particle* neighbor_part = particle.neighbors[i];
+				Vec3f dir = neighbor_part->position - particle.position;
+				if (dir.length2() <= smoothing_kernel_size2) {
+					++num_neighbors;
+					if (dot(dir, mass_density_gradient) < 0.)
+						++num_neighbors_half_space;
+				}
+			}
+			particle.changeFlag(Particle::FLAG_IS_AT_AIR,
+				(dfloat)num_neighbors_half_space / num_neighbors < m_config.surface_air_threshold);
+			//TODO: 2. criteria: all on a plane... (use length of mass_density_gradient?)
+
+
 			force_pressure *= -0.5 * particle_mass * m_kernel_pressure.kernelWeightGrad();
 			force_viscosity *= viscosity(particle) * particle_mass *
 					m_kernel_viscosity.kernelWeightLaplace();
@@ -136,6 +173,7 @@ void Simulation::run() {
 			Vec3f force_gravity = particle.density*m_config.g;
 
 			particle.forces = force_pressure + force_viscosity + force_gravity;
+			particle.dtemperature = dtemperature;
 		}
 
 
@@ -154,7 +192,13 @@ void Simulation::run() {
 					m_height_field.normal(pos.x, pos.z, n);
 					particle.forces += n * ((height_field_val - pos.y)*m_config.ground_spring);
 				}
+				//ground particle flag
+				particle.changeFlag(Particle::FLAG_IS_ON_GROUND,
+						pos.y < height_field_val + max_ground_distance);
 			}
+
+			particle.temperature += particle.dtemperature * dt
+					* m_config.temperature_diffusion_coeff;
 
 			//symplectic euler
 			particle.velocity += dt * particle.forces / particle.density;
@@ -190,7 +234,13 @@ void Simulation::run() {
 					//reflect velocity
 					particle.velocity = particle.velocity - (2.*dot(particle.velocity, n))*n;
 				}
+				//ground particle flag
+				particle.changeFlag(Particle::FLAG_IS_ON_GROUND,
+						pos.y < height_field_val + max_ground_distance);
 			}
+
+			//TODO: air & ground temp diffusion
+
 
 			//make sure no particle leaves the field in y direction
 			//This should never happen with correct scene config!
@@ -257,6 +307,9 @@ void Simulation::run() {
 				cur_neighbors_dist = m_config.neighbor_lookup_dist;
 				++num_neighbor_updates_statistics;
 			}
+
+			//TODO: change timestep adaptively?
+
 		}
 #pragma omp flush(need_neighbors_update)
 
@@ -314,20 +367,55 @@ void Simulation::writeOutput(int frame) {
 	}
 
 	fprintf(file, "]\n \"Cs\" [ ");
-	//colors
-	dfloat max_density = -1e12;
-	dfloat min_density =  1e12;
-	for(const auto& particle : m_particles) {
-		if(particle.density > max_density) max_density = particle.density;
-		if(particle.density < min_density) min_density = particle.density;
+	switch (m_config.output_color) {
+	case SimulationConfig::ColorDensity:
+	{
+		dfloat max_density = -1e12;
+		dfloat min_density = 1e12;
+		for (const auto& particle : m_particles) {
+			if (particle.density > max_density) max_density = particle.density;
+			if (particle.density < min_density) min_density = particle.density;
+		}
+		dfloat density_span = max_density - min_density;
+		if (density_span < Math::FEQ_EPS)
+			density_span = 1;
+		for (const auto& particle : m_particles) {
+			float r = 1;
+			float g = (particle.density - min_density) / density_span;
+			float b = 0;
+			fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+		}
 	}
-	dfloat density_span = max_density - min_density;
-	if (density_span < Math::FEQ_EPS) density_span = 1;
-	for(const auto& particle : m_particles) {
-		float r = 1;
-		float g = (particle.density-min_density)/density_span;
-		float b = 0;
-		fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+		break;
+	case SimulationConfig::ColorTemperature:
+	{
+		dfloat temperature_scaling = 1./m_max_temperature;
+		float r, g, b;
+		for (const auto& particle : m_particles) {
+			float color_temp = (float)particle.temperature * temperature_scaling;
+			if (color_temp > 0.5) {
+				r = (color_temp - 0.5)*2.;
+				g = 1. - (color_temp - 0.5)*2.;
+				b = 0.;
+			} else {
+				r = 0.;
+				g = color_temp*2.;
+				b = 1. - color_temp*2.;
+			}
+			fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+		}
+	}
+		break;
+	case SimulationConfig::ColorSurface:
+	{
+		for (const auto& particle : m_particles) {
+			float r = particle.isOnGround() ? 1. : 0.;
+			float g = particle.isAtAir() ? 1. : 0.;
+			float b = 0.8;
+			fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+		}
+	}
+		break;
 	}
 	fprintf(file, "]\n");
 
@@ -354,8 +442,8 @@ void Simulation::addParticlesOnGrid(const Math::Vec3f& min_pos,
 	}
 	if(calc_mass) {
 		m_config.particle_mass = dx * dy * dz * m_config.rho0;
-		printf("Particle Mass=%lf\n", m_config.particle_mass);
 	}
+	if (temperature > m_max_temperature) m_max_temperature = temperature;
 }
 
 bool Simulation::handleErruptions(dfloat simulation_time, dfloat dt, bool try_to_defer) {
