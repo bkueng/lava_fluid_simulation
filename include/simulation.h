@@ -21,12 +21,55 @@
 #include "global.h"
 #include "kernel.h"
 
+#include "Math/Vec3.h"
+#include "Math/Vec2.h"
+#include "Math/Rand.h"
+
 #include <vector>
 #include <string>
+#include <memory>
+
+class ErruptionSourceBase {
+public:
+	/**
+	 * get a random position
+	 * @param height_field
+	 * @param u, v             [0,1] random values
+	 * @return                 point above the heightfield
+	 */
+	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v) = 0;
+private:
+};
+
+class ErruptionSourceLineSegment : public ErruptionSourceBase {
+public:
+	ErruptionSourceLineSegment(const Math::Vec2f& start, const Math::Vec2f& end, dfloat y_offset)
+		: m_start(start), m_end(end), m_y_offset(y_offset) {}
+
+	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v);
+private:
+	Math::Vec2f m_start;
+	Math::Vec2f m_end;
+	dfloat m_y_offset;
+};
+
+//TODO: more source types: rectangle source...
+
 
 struct ErruptionConfig {
 	dfloat start_time;
-	//...
+	dfloat duration;
+	dfloat particles_per_sec;
+	dfloat init_temperature = 1000;
+	Math::Vec3f init_velocity;
+	std::shared_ptr<ErruptionSourceBase> source;
+
+	//additional non-config data
+	dfloat particles_left = 0.;
+
+	bool operator<(const ErruptionConfig& other) const {
+		return start_time > other.start_time; //smallest is last entry
+	}
 };
 
 struct SimulationConfig {
@@ -48,18 +91,23 @@ struct SimulationConfig {
 	dfloat k = 1000; /** stiffness parameter: higher stiffness needs smaller timesteps */
 	dfloat rho0 = 1000; /** rest density of a particle */
 
-	Math::Vec3f g = Math::Vec3f(0, -0.981, 0); /** gravity acceleration */
+	dfloat viscosity_coeff_a = 0.002;
+	dfloat viscosity_coeff_b = 10; /** temperature T to viscosity vi formula:
+				vi = b*exp(-a*T). a,b > 0. a smaller = flatter curve */
 
-	dfloat viscosity = 1; //TODO: make temp-dependent
+	Math::Vec3f g = Math::Vec3f(0, -9.81, 0); /** gravity acceleration */
 
 	dfloat particle_mass = 0.0072;
+
+	dfloat init_velocity_perturb_angle = 0.; /** randomly perturb the initial
+				velocity of an errupted particle by maximally this angle (in degrees) */
 
 	enum GroundMethod {
 		GroundForceSpring = 0,
 		GroundElastic
 	};
 	GroundMethod ground_method = GroundElastic;
-	dfloat ground_spring = 100.; /** ground spring constant */
+	dfloat ground_spring = 1000.; /** ground spring constant */
 
 	std::vector<ErruptionConfig> erruptions;
 
@@ -101,9 +149,23 @@ private:
 	inline void addParticle(const Math::Vec3f& position, const Math::Vec3f& velocity,
 			dfloat temperature);
 
-	inline dfloat pressure(const Particle& particle) {
+	inline dfloat pressure(const Particle& particle) const {
 		return std::max((dfloat)0., m_config.k * (particle.density - m_config.rho0));
 	}
+
+	inline dfloat viscosity(const Particle& particle) const {
+		return m_config.viscosity_coeff_b *
+				exp(-m_config.viscosity_coeff_a * particle.temperature);
+	}
+
+	/**
+	 * @param try_to_defer     try not to add any particles in this step, but
+	 *                         accumulate and add in the future. this is for
+	 *                         performance.
+	 * @return true if particle array was changed (ie particles added/removed)
+	 */
+	bool handleErruptions(dfloat simulation_time, dfloat dt, bool try_to_defer);
+
 
 	void initOutput();
 	void writeOutput(int frame);
@@ -118,6 +180,13 @@ private:
 	KernelPoly6 m_kernel;
 	KernelSpiky m_kernel_pressure;
 	KernelViscosity m_kernel_viscosity;
+
+	std::list<ErruptionConfig> m_active_erruptions;
+	int m_deferred_erruption_steps = 0;
+	static constexpr dfloat m_max_deferred_erruption_steps = 3;
+
+
+	Math::RandMT m_rand;
 };
 
 #endif /* _SIMULATION_H_ */

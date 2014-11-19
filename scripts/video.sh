@@ -29,7 +29,7 @@ file_name="$file_name$idx"
 
 
 # -crf 22: high quality constant bitrate
-ffmpeg -i "$rendering_dir"/out_%06d.tif -r "$FPS" -crf 22 \
+ffmpeg -framerate "$FPS" -i "$rendering_dir"/out_%06d.tif -vf fps=30 -crf 22 \
 	-vcodec libx264 -threads 6 "$output_dir/$file_name$suffix"
 
 echo "Generated video: $output_dir/$file_name$suffix"

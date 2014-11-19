@@ -258,8 +258,12 @@ void CMain::processArgs()
 		config.k = (dfloat)sim_node.attribute("pressure_k").as_double(1000);
 		config.rho0 = (dfloat)sim_node.attribute("rho0").as_double(1000);
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
+		config.viscosity_coeff_a = (dfloat)sim_node.attribute("viscosity_coeff_a").as_double(0.002);
+		config.viscosity_coeff_b = (dfloat)sim_node.attribute("viscosity_coeff_b").as_double(10);
 		istringstream(sim_node.attribute("gravity").as_string("0 -9.81 0")) >> config.g;
 		config.time_step = (dfloat)sim_node.attribute("time_step").as_double(0.001);
+		config.init_velocity_perturb_angle = (dfloat)sim_node.attribute(
+				"init_velocity_perturb_angle").as_double(0.);
 		config.output_rate = (int)sim_node.attribute("output_rate").as_int(1);
 		string ground_method = sim_node.attribute("ground_method").as_string("elastic");
 		if (ground_method == "elastic") {
@@ -272,7 +276,32 @@ void CMain::processArgs()
 			return;
 		}
 
-		//TODO: erruptions
+		//erruptions
+		xml_node erruptions_node = sim_node.child("erruptions");
+		for (xml_node erruption = erruptions_node.child("erruption"); erruption;
+				erruption = erruption.next_sibling("erruption")) {
+			ErruptionConfig erruption_config;
+			erruption_config.start_time =
+					(dfloat)erruption.attribute("start_time").as_double(0.);
+			erruption_config.duration =
+					(dfloat)erruption.attribute("duration").as_double(0.1);
+			erruption_config.particles_per_sec =
+					(dfloat)erruption.attribute("particles_per_sec").as_double(10000);
+			erruption_config.init_temperature =
+					(dfloat)erruption.attribute("init_temperature").as_double(1000);
+			istringstream(erruption.attribute("init_velocity").as_string("0 0.1 0"))
+					>> erruption_config.init_velocity;
+			xml_node source_node;
+			if ((source_node = erruption.child("source-line"))) {
+				Vec2f start, end;
+				istringstream(source_node.attribute("start").as_string("0 0")) >> start;
+				istringstream(source_node.attribute("end").as_string("0 0")) >> end;
+				dfloat y_offset = (dfloat)source_node.attribute("y_offset").as_double(0.);
+				erruption_config.source = std::make_shared<ErruptionSourceLineSegment>(start, end, y_offset);
+			} //else if: TODO: other types...
+
+			config.erruptions.push_back(erruption_config);
+		}
 
 		//output directory
 		string output_dir = "output/simulation";
