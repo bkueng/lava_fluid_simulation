@@ -52,12 +52,11 @@ render() {
 	file="$2"
 	file_name="$(basename -s .rib "$file")"
 	frame_nr="${file_name:6}"
-	sed -i "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
-	sed -i "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp"
+	sed -i "" "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
+	sed -i "" "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp"
 	echo "Rendering $file"
 	$renderer "$scene_file_tmp"
 }
-
 
 frames=""
 renderer=rndr #pixie renderer binary
@@ -94,7 +93,7 @@ command -v "$renderer" >/dev/null 2>&1 || \
 base_name="$(basename -s .xml "$config_file")"
 data_dir="output/simulation/$base_name"
 rendering_dir="output/rendering/$base_name"
-mkdir "$rendering_dir" &>/dev/null
+mkdir -p "$rendering_dir" &>/dev/null
 
 # additional shaders path
 export SHADERS=data/shaders
@@ -105,23 +104,23 @@ point_width="$(getxmlattr "$config_file" "/config/output/rendering/@constantwidt
 height_field_file="$(getxmlattr "$config_file" "/config/simulation/heightfield/@file")"
 height_scaling="$(getxmlattr "$config_file" "/config/simulation/heightfield/@scaling")"
 [ "$height_scaling" = "" ] && height_scaling=1
-#using bc: height_scaling_larger=`echo "$height_scaling+0.1" | bc`
-height_scaling_larger=`echo "$height_scaling 0.1" | awk '{printf "%f", $1 + $2}'`
+height_scaling_larger=`echo "$height_scaling+0.1" | bc`
+echo $height_scaling_larger
 
 echo "Using Scene file: $scene_file"
 
-scene_file_tmp="$(mktemp --tmpdir "render_${base_name}.XXXXXXXXXX.rib")"
+scene_file_tmp="$(mktemp -t "render_${base_name}.XXXXXXXXXX.rib")"
 cp "$scene_file" "$scene_file_tmp"
 
 
 # replace directories
-sed -i "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
+sed -i "" "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
 # escape the path (-> or better use awk?)
 height_field_file_esc="$(echo "$height_field_file" | sed -e 's/[\/&]/\\&/g')"
-sed -i "s/HEIGHT_FIELD_FILE/${height_field_file_esc}/g" "$scene_file_tmp"
-sed -i 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
-sed -i 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
-sed -i 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
+sed -i "" "s/HEIGHT_FIELD_FILE/${height_field_file_esc}/g" "$scene_file_tmp"
+sed -i "" 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
+sed -i "" 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
+sed -i "" 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
 
 # iterate frames & render
 if [ "$frames" = "" ]; then
@@ -135,5 +134,6 @@ else
 	done
 fi
 
-rm "$scene_file_tmp"
+echo $scene_file_tmp
+#rm "$scene_file_tmp"
 
