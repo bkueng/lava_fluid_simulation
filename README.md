@@ -31,11 +31,13 @@ RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 `$ ./scripts/video.sh output/rendering/grid_simple 20`
 
 ##### Configuration #####
-How to setup configuraton parameters:
+How to setup & tune configuraton parameters:
 * Set `lookup_dist` equal to `smoothing_kernel_size`, then make sure that the
   simulation has around 30-40 average neighbors (avg\_nei).
 * Then slightly increase the `lookup_dist` to have around 20% neighbor list
   updates (nei\_upd) for optimal performance.
+* Make sure the surface particles are correctly calculated by changing
+  surface\_air\_threshold. To visualize, set color="surface" in output.
 
 
 #### Literature ####

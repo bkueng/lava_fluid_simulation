@@ -244,7 +244,7 @@ void CMain::processArgs()
 		SimulationConfig config;
 		xml_node config_node = doc.child("config");
 		xml_node sim_node = config_node.child("simulation");
-		//xml_node output_node = config_node.child("output");
+		xml_node output_node = config_node.child("output");
 
 		/* read the config */
 		config.simulation_time = (dfloat)sim_node.attribute("simulation_time").as_double(60);
@@ -260,6 +260,14 @@ void CMain::processArgs()
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
 		config.viscosity_coeff_a = (dfloat)sim_node.attribute("viscosity_coeff_a").as_double(0.002);
 		config.viscosity_coeff_b = (dfloat)sim_node.attribute("viscosity_coeff_b").as_double(10);
+		config.temperature_air = (dfloat)sim_node.attribute("temperature_air").as_double(20);
+		config.temperature_ground = (dfloat)sim_node.attribute("temperature_ground").as_double(10);
+		config.temperature_diffusion_coeff = (dfloat)sim_node.attribute(
+				"temperature_diffusion_coeff").as_double(90000);
+		config.surface_ground_radius_factor = (dfloat)sim_node.attribute(
+				"surface_ground_radius_factor").as_double(0.1);
+		config.surface_air_threshold = (dfloat)sim_node.attribute(
+				"surface_air_threshold").as_double(0.4);
 		istringstream(sim_node.attribute("gravity").as_string("0 -9.81 0")) >> config.g;
 		config.time_step = (dfloat)sim_node.attribute("time_step").as_double(0.001);
 		config.init_velocity_perturb_angle = (dfloat)sim_node.attribute(
@@ -309,6 +317,16 @@ void CMain::processArgs()
 		string config_file_base = fileBaseName(config_file);
 		config.output_dir = output_dir + "/" + config_file_base;
 		createDirectory(config.output_dir);
+		string output_color = output_node.attribute("color").as_string("density");
+		if (output_color == "density") {
+			config.output_color = SimulationConfig::ColorDensity;
+		} else if(output_color == "temperature") {
+			config.output_color = SimulationConfig::ColorTemperature;
+		} else if(output_color == "surface") {
+			config.output_color = SimulationConfig::ColorSurface;
+		} else {
+			THROW_s(EINVALID_PARAMETER, "Error: unknown output color %s\n", output_color.c_str());
+		}
 
 		string sframes;
 		if(m_parameters->getParam("frames", sframes)) {

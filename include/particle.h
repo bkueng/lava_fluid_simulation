@@ -24,6 +24,7 @@ struct Particle {
 	Math::Vec3f velocity;
 
 	dfloat temperature;
+	dfloat dtemperature; /** temperature update */
 
 	dfloat density;
 	Math::Vec3f forces; /** sum of all forces */
@@ -32,6 +33,18 @@ struct Particle {
 
 	Particle** neighbors = NULL; /** pointer to an array with its neighbors */
 	unsigned short num_neighbors = 0;
+
+	unsigned char flags = 0;
+
+	static constexpr unsigned char FLAG_IS_ON_GROUND = 1 << 0;
+	static constexpr unsigned char FLAG_IS_AT_AIR = 1 << 1;
+
+	bool isOnGround() const { return flags & FLAG_IS_ON_GROUND; }
+	bool isAtAir() const { return flags & FLAG_IS_AT_AIR; }
+	void setFlag(unsigned char flag) { flags |= flag; }
+	void clearFlag(unsigned char flag) { flags &= ~flag; }
+	void changeFlag(unsigned char flag, bool set)
+		{ if (set) setFlag(flag); else clearFlag(flag); }
 };
 
 

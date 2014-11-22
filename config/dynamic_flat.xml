@@ -17,6 +17,10 @@
 		init_velocity_perturb_angle="10"
 		viscosity_coeff_a="0.002"
 		viscosity_coeff_b="2"
+
+		temperature_diffusion_coeff="90000"
+
+		surface_air_threshold="0.4"
 		>
 
 		<heightfield
@@ -45,7 +49,7 @@
 				start_time="0"
 				duration="0.13"
 				particles_per_sec="10000"
-				init_temperature="1000"
+				init_temperature="600"
 				init_velocity="0 0.2 -0.8"
 				>
 				<source-line
@@ -58,7 +62,7 @@
 				start_time="0"
 				duration="0.15"
 				particles_per_sec="10000"
-				init_temperature="1000"
+				init_temperature="600"
 				init_velocity="0 0.2 -0.8"
 				>
 				<source-line
@@ -76,7 +80,7 @@
 				start_time="0"
 				duration="0.11"
 				particles_per_sec="10000"
-				init_temperature="1000"
+				init_temperature="300"
 				init_velocity="0 0.2 1.5"
 				>
 				<source-line
@@ -89,7 +93,7 @@
 				start_time="0"
 				duration="0.13"
 				particles_per_sec="10000"
-				init_temperature="1000"
+				init_temperature="300"
 				init_velocity="0 0.2 1.5"
 				>
 				<source-line
@@ -102,7 +106,7 @@
 				start_time="0"
 				duration="0.15"
 				particles_per_sec="10000"
-				init_temperature="1000"
+				init_temperature="300"
 				init_velocity="0 0.2 1.5"
 				>
 				<source-line
@@ -115,7 +119,8 @@
 	</simulation>
 
 	<output
-		format="points">
+		format="points"
+		color="temperature">
 		<rendering
 			scene="data/scenes/flat.rib"
 			constantwidth="0.003">
