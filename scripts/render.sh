@@ -119,7 +119,7 @@ height_field_file="$(getxmlattr "$config_file" "/config/simulation/heightfield/@
 height_scaling="$(getxmlattr "$config_file" "/config/simulation/heightfield/@scaling")"
 [ "$height_scaling" = "" ] && height_scaling=1
 height_scaling_larger=`echo "$height_scaling+0.1" | bc`
-echo $height_scaling_larger
+#height_scaling_larger=`echo "$height_scaling 0.1" | awk '{printf "%f", $1 + $2}'`
 
 echo "Using Scene file: $scene_file"
 
