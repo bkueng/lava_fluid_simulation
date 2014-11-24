@@ -1,11 +1,8 @@
 
 Format 800 600 1
 Hider "hidden"
-#Hider "zbuffer"
-#Hider "raytrace"
 
 #vertical view, no height field -> quick rendering
-
 
 Option "limits" "bucketsize" [ 64 64 ]
 Option "limits" "gridsize" [ 256 ]
@@ -17,16 +14,15 @@ Display "output/rendering/OUTPUT_DIRECTORY/out_000000.tif" "file" "rgb"
 Projection "perspective" "fov" 30
 Translate 0 0 1.0
 Rotate 90 0 1 0
-#Rotate -35 0 0 1
+Translate -0.5 0 -0.5
+
 WorldBegin
-        LightSource "ambientlight" 1 "intensity" 0.2
-        LightSource "distantlight" 3 "intensity" 0.2 "from" [14 6 7] "to" [0 -2 0]
-			"lightcolor" [0.0 1.0 1.0]
+	LightSource "ambientlight" 1 "intensity" 0.2
+	LightSource "distantlight" 3 "intensity" 0.2 "from" [14 6 7] "to" [0 -2 0]
+		"lightcolor" [0.0 1.0 1.0]
 
-        LightSource "distantlight" 4 "intensity" 0.8 "from" [-4 6 7] "to" [0 0 0]
-        "lightcolor" [1.0 1 1.0]
-
-		Translate -0.5 0 -0.5
+	LightSource "distantlight" 4 "intensity" 0.8 "from" [-4 6 7] "to" [0 0 0]
+		"lightcolor" [1.0 1 1.0]
 
 
 	#particles
