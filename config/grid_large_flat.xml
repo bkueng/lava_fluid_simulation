@@ -36,7 +36,7 @@
 	</simulation>
 
 	<output
-		format="points"
+		format="point"
 		color="surface">
 		<rendering
 			scene="data/scenes/flat_front_view.rib"

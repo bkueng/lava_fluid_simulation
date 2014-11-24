@@ -115,6 +115,7 @@ export SHADERS=data/shaders
 # parse config file
 scene_file="$(getxmlattr "$config_file" "/config/output/rendering/@scene")"
 point_width="$(getxmlattr "$config_file" "/config/output/rendering/@constantwidth")"
+format="$(getxmlattr "$config_file" "/config/output/@format")"
 height_field_file="$(getxmlattr "$config_file" "/config/simulation/heightfield/@file")"
 height_scaling="$(getxmlattr "$config_file" "/config/simulation/heightfield/@scaling")"
 [ "$height_scaling" = "" ] && height_scaling=1
@@ -132,7 +133,12 @@ sed -i.tmp "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
 # escape the path (-> or better use awk?)
 height_field_file_esc="$(echo "$height_field_file" | sed -e 's/[\/&]/\\&/g')"
 sed -i.tmp "s/HEIGHT_FIELD_FILE/${height_field_file_esc}/g" "$scene_file_tmp"
-sed -i.tmp 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
+if [ "$format" == "point" ]; then
+	sed -i.tmp 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
+else
+	# delete the line
+	sed -i.tmp '/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/d' "$scene_file_tmp"
+fi
 sed -i.tmp 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
 sed -i.tmp 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
 

@@ -132,6 +132,13 @@ struct SimulationConfig {
 							   ground and/or on surface */
 	};
 	OutputColor output_color = ColorDensity;
+	enum OutputFormat {
+		FormatPoint = 0, /** "point". render flat points */
+		FormatSphere,    /** "sphere". render spheres */
+		FormatSurface    /** "surface". render a surface */
+	};
+	OutputFormat output_format = FormatPoint;
+	float output_constantwidth = 0.003; /** output sphere width/point width */
 };
 
 /**

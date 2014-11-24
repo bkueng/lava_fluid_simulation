@@ -33,7 +33,7 @@
 	</simulation>
 
 	<output
-		format="points"
+		format="point"
 		color="density">
 		<rendering
 			scene="data/scenes/flat.rib"

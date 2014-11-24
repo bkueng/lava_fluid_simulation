@@ -119,7 +119,7 @@
 	</simulation>
 
 	<output
-		format="points"
+		format="point"
 		color="temperature">
 		<rendering
 			scene="data/scenes/flat.rib"

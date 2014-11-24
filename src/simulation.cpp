@@ -356,6 +356,48 @@ void Simulation::initOutput() {
 }
 
 void Simulation::writeOutput(int frame) {
+	dfloat temperature_scaling = 1./m_max_temperature;
+	dfloat max_density = -1e12, min_density = 1e12, density_span = 1;
+	float r = 0, g = 0, b = 0;
+	/* init color */
+	switch (m_config.output_color) {
+	case SimulationConfig::ColorDensity:
+		for (const auto& particle : m_particles) {
+			if (particle.density > max_density) max_density = particle.density;
+			if (particle.density < min_density) min_density = particle.density;
+		}
+		density_span = max_density - min_density;
+		if (density_span < Math::FEQ_EPS)
+			density_span = 1;
+		break;
+	default:
+		break;
+	}
+
+	auto f_color_density = [&](const Particle& particle) {
+		r = 1;
+		g = (particle.density - min_density) / density_span;
+		b = 0;
+	};
+	auto f_color_temperature = [&](const Particle& particle) {
+		float color_temp = (float)particle.temperature * temperature_scaling;
+		if (color_temp > 0.5) {
+			r = (color_temp - 0.5)*2.;
+			g = 1. - (color_temp - 0.5)*2.;
+			b = 0.;
+		} else {
+			r = 0.;
+			g = color_temp*2.;
+			b = 1. - color_temp*2.;
+		}
+	};
+	auto f_color_surface = [&](const Particle& particle) {
+		r = particle.isOnGround() ? 1. : 0.;
+		g = particle.isAtAir() ? 1. : 0.;
+		b = 0.8;
+	};
+
+
 	char buffer[32];
 	/* RIB output */
 	sprintf(buffer, "/frame_%06i.rib", frame);
@@ -363,65 +405,67 @@ void Simulation::writeOutput(int frame) {
 
 	FILE* file = fopen(file_name.c_str(), "w");
 	if (!file) throw EXCEPTION(EFILE_ERROR);
-	//positions
-	fprintf(file, "Points \"P\" [ ");
-	for(const auto& particle : m_particles) {
-		fprintf(file, "%.7lf %.7lf %.7lf ",
-			(double)particle.position.x, (double)particle.position.y, (double)particle.position.z);
-	}
 
-	fprintf(file, "]\n \"Cs\" [ ");
-	switch (m_config.output_color) {
-	case SimulationConfig::ColorDensity:
-	{
-		dfloat max_density = -1e12;
-		dfloat min_density = 1e12;
-		for (const auto& particle : m_particles) {
-			if (particle.density > max_density) max_density = particle.density;
-			if (particle.density < min_density) min_density = particle.density;
+
+	switch (m_config.output_format) {
+	case SimulationConfig::FormatPoint:
+		//positions
+		fprintf(file, "Points \"P\" [ ");
+		for(const auto& particle : m_particles) {
+			fprintf(file, "%.7lf %.7lf %.7lf ",
+					(double)particle.position.x, (double)particle.position.y,
+					(double)particle.position.z);
 		}
-		dfloat density_span = max_density - min_density;
-		if (density_span < Math::FEQ_EPS)
-			density_span = 1;
-		for (const auto& particle : m_particles) {
-			float r = 1;
-			float g = (particle.density - min_density) / density_span;
-			float b = 0;
-			fprintf(file, "%.3f %.3f %.3f ", r, g, b);
-		}
-	}
-		break;
-	case SimulationConfig::ColorTemperature:
-	{
-		dfloat temperature_scaling = 1./m_max_temperature;
-		float r, g, b;
-		for (const auto& particle : m_particles) {
-			float color_temp = (float)particle.temperature * temperature_scaling;
-			if (color_temp > 0.5) {
-				r = (color_temp - 0.5)*2.;
-				g = 1. - (color_temp - 0.5)*2.;
-				b = 0.;
-			} else {
-				r = 0.;
-				g = color_temp*2.;
-				b = 1. - color_temp*2.;
+		fprintf(file, "]\n \"Cs\" [ ");
+		switch (m_config.output_color) {
+		case SimulationConfig::ColorDensity:
+			for (const auto& particle : m_particles) {
+				f_color_density(particle);
+				fprintf(file, "%.3f %.3f %.3f ", r, g, b);
 			}
-			fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+			break;
+		case SimulationConfig::ColorTemperature:
+			for (const auto& particle : m_particles) {
+				f_color_temperature(particle);
+				fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+			}
+			break;
+		case SimulationConfig::ColorSurface:
+			for (const auto& particle : m_particles) {
+				f_color_surface(particle);
+				fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+			}
+			break;
 		}
-	}
+		fprintf(file, "]\n");
 		break;
-	case SimulationConfig::ColorSurface:
+
+	case SimulationConfig::FormatSphere:
+	case SimulationConfig::FormatSurface: /* surface also uses spheres */
 	{
-		for (const auto& particle : m_particles) {
-			float r = particle.isOnGround() ? 1. : 0.;
-			float g = particle.isAtAir() ? 1. : 0.;
-			float b = 0.8;
-			fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+		float radius = m_config.output_constantwidth / 2.;
+
+		for(const auto& particle : m_particles) {
+			switch (m_config.output_color) {
+			case SimulationConfig::ColorDensity:
+				f_color_density(particle);
+				break;
+			case SimulationConfig::ColorTemperature:
+				f_color_temperature(particle);
+				break;
+			case SimulationConfig::ColorSurface:
+				f_color_surface(particle);
+				break;
+			}
+			fprintf(file, "AttributeBegin\nColor [ %.3f %.3f %.3f ]\n", r, g, b);
+			fprintf(file, "Translate %.7lf %.7lf %.7lf\nSphere %.4f -%.4f %.4f 360\nAttributeEnd\n",
+					(double)particle.position.x, (double)particle.position.y,
+					(double)particle.position.z,
+					radius, radius, radius);
 		}
 	}
 		break;
 	}
-	fprintf(file, "]\n");
 
 	fclose(file);
 }

@@ -327,6 +327,18 @@ void CMain::processArgs()
 		} else {
 			THROW_s(EINVALID_PARAMETER, "Error: unknown output color %s\n", output_color.c_str());
 		}
+		xml_node rendering_node = output_node.child("rendering");
+		config.output_constantwidth = rendering_node.attribute("constantwidth").as_float(0.003);
+		string output_format = output_node.attribute("format").as_string("point");
+		if (output_format == "point") {
+			config.output_format = SimulationConfig::FormatPoint;
+		} else if(output_format == "sphere") {
+			config.output_format = SimulationConfig::FormatSphere;
+		} else if(output_format == "surface") {
+			config.output_format = SimulationConfig::FormatSurface;
+		} else {
+			THROW_s(EINVALID_PARAMETER, "Error: unknown output format %s\n", output_format.c_str());
+		}
 
 		string sframes;
 		if(m_parameters->getParam("frames", sframes)) {
