@@ -163,8 +163,6 @@ void Simulation::run() {
 			}
 			particle.changeFlag(Particle::FLAG_IS_AT_AIR,
 				(dfloat)num_neighbors_half_space / num_neighbors < m_config.surface_air_threshold);
-			//TODO: 2. criteria: all on a plane... (use length of mass_density_gradient?)
-
 
 			force_pressure *= -0.5 * particle_mass * m_kernel_pressure.kernelWeightGrad();
 			force_viscosity *= viscosity(particle) * particle_mass *
@@ -276,16 +274,22 @@ void Simulation::run() {
 			int64_t cur_time = getTickCount();
 			double elapsed_time = getTickSeconds(cur_time-start_time);
 			if(elapsed_time >= 1. || !simulation_running) {
+				dfloat min_temp = 1e20, max_temp = 0;
+				for(const auto& particle : m_particles) {
+					if(particle.temperature > max_temp) max_temp = particle.temperature;
+					if(particle.temperature < min_temp) min_temp = particle.temperature;
+				}
 				int avg_neighbors = 0;
 				if (m_particles.size() > 0)
 					avg_neighbors = (int) (global_num_neighbors / m_particles.size());
-				printf("#ele:%6i, T:%7.3f / %.3f, steps:%6.2f/s (%4.0fms/step), avg_nei:%3i, nei_upd:%2i%%\n",
+				printf("#ele:%6i, T:%7.3f / %.3f, steps:%5.1f/s (%3.0fms/step), avg_nei:%3i, nei_upd:%2i%% temp:[%.0f %.0f]\n",
 						(int)m_particles.size(), (float)simulation_time,
 						(float)m_config.simulation_time,
 						(float)num_timesteps_statistics / elapsed_time,
 						(float)elapsed_time/num_timesteps_statistics*1000.f,
 						avg_neighbors,
-						100*num_neighbor_updates_statistics/num_timesteps_statistics);
+						100*num_neighbor_updates_statistics/num_timesteps_statistics,
+						min_temp, max_temp);
 				start_time = cur_time;
 				num_timesteps_statistics = 0;
 				num_neighbor_updates_statistics = 0;
