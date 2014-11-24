@@ -22,6 +22,8 @@ usage() {
 	echo "                            \"\`seq 3 8\`\""
 	echo "       -r,--renderer <renderer_binary>"
 	echo "                            select renderer (default=$renderer)"
+	echo "       -t,--timeout <timeout>"
+	echo "                            set rendering timeout in sec (for stuck rendering)"
 	exit -1
 
 }
@@ -56,10 +58,17 @@ render() {
 	sed -i.tmp "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
 	sed -i.tmp "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp"
 	echo "Rendering $file"
-	$renderer "$scene_file_tmp"
+	runs=4 #max retries
+	while [ $runs -gt 0 ]; do
+		$timeout_prefix $renderer "$scene_file_tmp"
+		ret=$?
+		[[ $ret -eq 0 ]] && runs=0
+		let runs="$runs-1"
+	done
 }
 
 frames=""
+timeout_prefix=""
 renderer=rndr #pixie renderer binary
 [ ! -f "$config_file" ] && echo "Error: no/invalid config file given" && usage
 #parse parameters
@@ -78,6 +87,10 @@ do
 			;;
 		-r|--renderer)
 			renderer="$1"
+			shift
+			;;
+		-t|--timeout)
+			timeout_prefix="timeout $1"
 			shift
 			;;
 		*)
