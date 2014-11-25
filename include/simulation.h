@@ -128,8 +128,10 @@ struct SimulationConfig {
 	enum OutputColor {
 		ColorDensity = 0,  /** "density" */
 		ColorTemperature,  /** "temperature" (lowest=blue, middle=green, highest=red) */
-		ColorSurface       /** "surface" indicate whether particles are on
+		ColorSurface,      /** "surface" indicate whether particles are on
 							   ground and/or on surface */
+		ColorShader        /** "shader" additional normalized temperature array
+		                       for shader. only with FormatSurface */
 	};
 	OutputColor output_color = ColorDensity;
 	enum OutputFormat {

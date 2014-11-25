@@ -13,10 +13,14 @@ PixelFilter "box" 1 1
 Declare "Nn" "varying vector"
 Declare "Mask" "varying float"
 Declare "Zdist" "varying float"
+Declare "Temp" "uniform float"
+Declare "TempOut" "varying float"
 Display "+output/rendering/OUTPUT_DIRECTORY/normal.tif" "tiff" "Nn" "quantize" [128 255 0 255]
 Display "+output/rendering/OUTPUT_DIRECTORY/mask.tif" "tiff" "Mask" "quantize" [0 255 0 255]
 # restricts max z value to 20 (in camera space)
 Display "+output/rendering/OUTPUT_DIRECTORY/zdist.tif" "tiff" "Zdist" "quantize" [0 3277 0 65535]
+Display "+output/rendering/OUTPUT_DIRECTORY/temperature.tif" "tiff" "TempOut"
+	"quantize" [0 65535 0 65535]
 
 ReadArchive "data/scenes/include/alpine_camera.rib"
 

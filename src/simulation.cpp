@@ -436,6 +436,8 @@ void Simulation::writeOutput(int frame) {
 				fprintf(file, "%.3f %.3f %.3f ", r, g, b);
 			}
 			break;
+		default:
+			break;
 		}
 		fprintf(file, "]\n");
 		break;
@@ -446,22 +448,34 @@ void Simulation::writeOutput(int frame) {
 		float radius = m_config.output_constantwidth / 2.;
 
 		for(const auto& particle : m_particles) {
-			switch (m_config.output_color) {
-			case SimulationConfig::ColorDensity:
-				f_color_density(particle);
-				break;
-			case SimulationConfig::ColorTemperature:
-				f_color_temperature(particle);
-				break;
-			case SimulationConfig::ColorSurface:
-				f_color_surface(particle);
-				break;
+			fprintf(file, "AttributeBegin\n");
+			if (m_config.output_format != SimulationConfig::FormatSurface) {
+				switch (m_config.output_color) {
+				case SimulationConfig::ColorDensity:
+					f_color_density(particle);
+					break;
+				case SimulationConfig::ColorTemperature:
+					f_color_temperature(particle);
+					break;
+				case SimulationConfig::ColorSurface:
+					f_color_surface(particle);
+					break;
+				default:
+					break;
+				}
+				fprintf(file, "Color [ %.3f %.3f %.3f ]\n", r, g, b);
 			}
-			fprintf(file, "AttributeBegin\nColor [ %.3f %.3f %.3f ]\n", r, g, b);
-			fprintf(file, "Translate %.7lf %.7lf %.7lf\nSphere %.4f -%.4f %.4f 360\nAttributeEnd\n",
+			if (m_config.output_color == SimulationConfig::ColorShader) {
+				fprintf(file, "Translate %.7lf %.7lf %.7lf\nSphere %.4f -%.4f %.4f 360\n\"Temp\" [ %.4f ]\nAttributeEnd\n",
+					(double)particle.position.x, (double)particle.position.y,
+					(double)particle.position.z,
+					radius, radius, radius, (float)particle.temperature * temperature_scaling);
+			} else {
+				fprintf(file, "Translate %.7lf %.7lf %.7lf\nSphere %.4f -%.4f %.4f 360\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
 					radius, radius, radius);
+			}
 		}
 	}
 		break;

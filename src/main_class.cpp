@@ -317,16 +317,6 @@ void CMain::processArgs()
 		string config_file_base = fileBaseName(config_file);
 		config.output_dir = output_dir + "/" + config_file_base;
 		createDirectory(config.output_dir);
-		string output_color = output_node.attribute("color").as_string("density");
-		if (output_color == "density") {
-			config.output_color = SimulationConfig::ColorDensity;
-		} else if(output_color == "temperature") {
-			config.output_color = SimulationConfig::ColorTemperature;
-		} else if(output_color == "surface") {
-			config.output_color = SimulationConfig::ColorSurface;
-		} else {
-			THROW_s(EINVALID_PARAMETER, "Error: unknown output color %s\n", output_color.c_str());
-		}
 		xml_node rendering_node = output_node.child("rendering");
 		config.output_constantwidth = rendering_node.attribute("constantwidth").as_float(0.003);
 		string output_format = output_node.attribute("format").as_string("point");
@@ -337,7 +327,20 @@ void CMain::processArgs()
 		} else if(output_format == "surface") {
 			config.output_format = SimulationConfig::FormatSurface;
 		} else {
-			THROW_s(EINVALID_PARAMETER, "Error: unknown output format %s\n", output_format.c_str());
+			THROW_s(EINVALID_PARAMETER, "Error: unknown output format '%s'\n", output_format.c_str());
+		}
+		string output_color = output_node.attribute("color").as_string("density");
+		if (output_color == "density") {
+			config.output_color = SimulationConfig::ColorDensity;
+		} else if(output_color == "temperature") {
+			config.output_color = SimulationConfig::ColorTemperature;
+		} else if(output_color == "surface") {
+			config.output_color = SimulationConfig::ColorSurface;
+		} else if(config.output_format == SimulationConfig::FormatSurface
+				&& output_color == "shader") {
+			config.output_color = SimulationConfig::ColorShader;
+		} else {
+			THROW_s(EINVALID_PARAMETER, "Error: unknown output color '%s'\n", output_color.c_str());
 		}
 
 		string sframes;
