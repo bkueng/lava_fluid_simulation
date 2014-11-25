@@ -52,12 +52,13 @@ getxmlattr() {
 render() {
 	scene_file_tmp="$1"
 	file="$2"
+	pass="$3"
 	file_name="$(basename -s .rib "$file")"
 	frame_nr="${file_name:6}"
 
 	sed -i.tmp "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
 	sed -i.tmp "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp"
-	echo "Rendering $file"
+	echo "Rendering $file (Pass $pass)"
 	runs=4 #max retries
 	while [ $runs -gt 0 ]; do
 		$timeout_prefix $renderer "$scene_file_tmp"
@@ -113,7 +114,12 @@ mkdir -p "$rendering_dir" &>/dev/null
 export SHADERS=data/shaders
 
 # parse config file
-scene_file="$(getxmlattr "$config_file" "/config/output/rendering/@scene")"
+render_passes=()
+for i in `seq 0 10`; do
+	scene_file="$(getxmlattr "$config_file" "/config/output/rendering/@pass$i")"
+	[ "$scene_file" != "" ] && render_passes+=( "$scene_file" )
+done
+
 point_width="$(getxmlattr "$config_file" "/config/output/rendering/@constantwidth")"
 format="$(getxmlattr "$config_file" "/config/output/@format")"
 height_field_file="$(getxmlattr "$config_file" "/config/simulation/heightfield/@file")"
@@ -122,37 +128,79 @@ height_scaling="$(getxmlattr "$config_file" "/config/simulation/heightfield/@sca
 height_scaling_larger=`echo "$height_scaling+0.1" | bc`
 #height_scaling_larger=`echo "$height_scaling 0.1" | awk '{printf "%f", $1 + $2}'`
 
-echo "Using Scene file: $scene_file"
+echo "Render Passes: ${render_passes[@]}"
 
-scene_file_tmp="$(mktemp -t "render_${base_name}.XXXXXXXXXX.rib")"
-cp "$scene_file" "$scene_file_tmp"
+# init tmp rendering files
+scene_files_tmp=()
+for render_pass in "${render_passes[@]}"; do
+	case "$render_pass" in
+		blur*)
+			scene_files_tmp+=( "" )
+			;;
+		*.rib)
+			scene_file_tmp="$(mktemp -t "render_${base_name}.XXXXXXXXXX.rib")"
+			scene_files_tmp+=( "$scene_file_tmp" )
+			cp "$render_pass" "$scene_file_tmp"
 
+			# replace directories
+			sed -i.tmp "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
+			# escape the path (-> or better use awk?)
+			height_field_file_esc="$(echo "$height_field_file" | sed -e 's/[\/&]/\\&/g')"
+			sed -i.tmp "s/HEIGHT_FIELD_FILE/${height_field_file_esc}/g" "$scene_file_tmp"
+			if [ "$format" == "point" ]; then
+				sed -i.tmp 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
+			else
+				# delete the line
+				sed -i.tmp '/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/d' "$scene_file_tmp"
+			fi
+			sed -i.tmp 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
+			sed -i.tmp 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
+			;;
+		*)
+			echo "Error: invalid render config $render_pass"
+			exit
+			;;
+	esac
+done
 
-# replace directories
-sed -i.tmp "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
-# escape the path (-> or better use awk?)
-height_field_file_esc="$(echo "$height_field_file" | sed -e 's/[\/&]/\\&/g')"
-sed -i.tmp "s/HEIGHT_FIELD_FILE/${height_field_file_esc}/g" "$scene_file_tmp"
-if [ "$format" == "point" ]; then
-	sed -i.tmp 's/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/\"constantwidth\" [ '${point_width}'/g' "$scene_file_tmp"
-else
-	# delete the line
-	sed -i.tmp '/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/d' "$scene_file_tmp"
-fi
-sed -i.tmp 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
-sed -i.tmp 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
+renderPass() {
+	file="$1" #frame to render
+	# iterate passes
+	i=0
+	while [[ "$i" -lt "${#render_passes[@]}" ]]; do
+		render_pass="${render_passes[$i]}"
+
+		case "$render_pass" in
+			blur*)
+				file_base=${render_pass##* }
+				echo "Blurring $file_base (Pass $i)"
+				file_blur="$rendering_dir/${file_base}.tif"
+				blur="${render_pass% *}"
+				convert "$file_blur" -$blur "$file_blur"
+				;;
+			*.rib)
+				scene_file_tmp="${scene_files_tmp[$i]}"
+				render "$scene_file_tmp" "$file" "$i"
+				;;
+		esac
+		let i="$i+1"
+	done
+}
 
 # iterate frames & render
 if [ "$frames" = "" ]; then
 	for file in $data_dir/frame_*.rib; do
-		render "$scene_file_tmp" "$file"
+		renderPass "$file"
 	done
 else
 	for frame in $frames; do
 		file="$(printf "$data_dir/frame_%06i.rib" $frame)"
-		render "$scene_file_tmp" "$file"
+		renderPass "$file"
 	done
 fi
 
-rm "$scene_file_tmp" "$scene_file_tmp".tmp
+for scene_file_tmp in "${scene_files_tmp[@]}"; do
+	[ "$scene_file_tmp" != "" ] && \
+		rm "$scene_file_tmp" "$scene_file_tmp".tmp
+done
 

@@ -1,0 +1,17 @@
+
+# we need some screen-filling surface that we can displace using the calculated
+# zbuffer. Since the camera projection cannot be changed anymore, we need
+# world-space coordinates which map to screen-filling positions. This means when
+# the camera is changed, this needs to be changed as well... ugly but I didn't
+# find a better solution.
+# FIXME: this depends on the camera location & orientation. another solution
+# would be to use a large enough sphere located at the camera position. but this
+# would be slower & still be camera dependent.
+# yet another way would be to use an arbitrary quadrangle and displace it using
+# texture coordinates. but this is even more expensive & needs potentially large
+# displacements.
+
+PointsPolygons
+	[ 4]
+	[ 0 1 2 3 ]
+	"P" [ 0 -1 0  0 -1 1  0 1 1  0 1 0 ]
