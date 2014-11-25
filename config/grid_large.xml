@@ -40,7 +40,7 @@
 		format="point"
 		color="density">
 		<rendering
-			scene="data/scenes/alpine.rib"
+			pass0="data/scenes/alpine.rib"
 			constantwidth="0.003">
 		</rendering>
 	</output>

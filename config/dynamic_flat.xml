@@ -122,7 +122,7 @@
 		format="point"
 		color="temperature">
 		<rendering
-			scene="data/scenes/flat.rib"
+			pass0="data/scenes/flat.rib"
 			constantwidth="0.003">
 		</rendering>
 	</output>

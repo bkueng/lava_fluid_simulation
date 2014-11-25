@@ -39,7 +39,7 @@
 		format="point"
 		color="surface">
 		<rendering
-			scene="data/scenes/flat_front_view.rib"
+			pass0="data/scenes/flat_front_view.rib"
 			constantwidth="0.003">
 		</rendering>
 	</output>

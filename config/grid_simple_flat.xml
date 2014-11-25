@@ -36,7 +36,7 @@
 		format="point"
 		color="density">
 		<rendering
-			scene="data/scenes/flat.rib"
+			pass0="data/scenes/flat.rib"
 			constantwidth="0.006">
 		</rendering>
 	</output>
