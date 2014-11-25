@@ -149,6 +149,7 @@ void Simulation::run() {
 				mass_density_gradient += gradient;
 			}
 			mass_density_gradient *= particle_mass * m_kernel_pressure.kernelWeightGrad();
+			particle.density_gradient = mass_density_gradient;
 			//surface particles: count number of particles on the half-space
 			//pointed to by the negative mass_density_gradient
 			int num_neighbors = 0, num_neighbors_half_space = 0;
@@ -443,7 +444,6 @@ void Simulation::writeOutput(int frame) {
 		break;
 
 	case SimulationConfig::FormatSphere:
-	case SimulationConfig::FormatSurface: /* surface also uses spheres */
 	{
 		float radius = m_config.output_constantwidth / 2.;
 
@@ -466,15 +466,62 @@ void Simulation::writeOutput(int frame) {
 				fprintf(file, "Color [ %.3f %.3f %.3f ]\n", r, g, b);
 			}
 			if (m_config.output_color == SimulationConfig::ColorShader) {
-				fprintf(file, "Translate %.7lf %.7lf %.7lf\nSphere %.4f -%.4f %.4f 360\n\"Temp\" [ %.4f ]\nAttributeEnd\n",
+				fprintf(file, "Translate %.7lf %.7lf %.7lf\n"
+					"Sphere %.4f -%.4f %.4f 360\n\"Temp\" [ %.4f ]\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
 					radius, radius, radius, (float)particle.temperature * temperature_scaling);
 			} else {
-				fprintf(file, "Translate %.7lf %.7lf %.7lf\nSphere %.4f -%.4f %.4f 360\nAttributeEnd\n",
+				fprintf(file, "Translate %.7lf %.7lf %.7lf\n"
+					"Sphere %.4f -%.4f %.4f 360\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
 					radius, radius, radius);
+			}
+		}
+	}
+		break;
+	case SimulationConfig::FormatDisk:
+	case SimulationConfig::FormatSurface: /* surface also uses disks */
+	{
+		float radius = m_config.output_constantwidth / 2.;
+
+		for(const auto& particle : m_particles) {
+			fprintf(file, "AttributeBegin\n");
+			if (m_config.output_format != SimulationConfig::FormatSurface) {
+				switch (m_config.output_color) {
+				case SimulationConfig::ColorDensity:
+					f_color_density(particle);
+					break;
+				case SimulationConfig::ColorTemperature:
+					f_color_temperature(particle);
+					break;
+				case SimulationConfig::ColorSurface:
+					f_color_surface(particle);
+					break;
+				default:
+					break;
+				}
+				fprintf(file, "Color [ %.3f %.3f %.3f ]\n", r, g, b);
+			}
+			//rotate z axis to -particle.gradient
+			Vec3f zaxis(0, 0, 1);
+			Vec3f grad = -particle.density_gradient.normalized();
+			float angle = acos(dot(zaxis, grad))*(180./M_PI);
+			Vec3f rot_dir = cross(zaxis, grad);
+			if (m_config.output_color == SimulationConfig::ColorShader) {
+				fprintf(file, "Translate %.7lf %.7lf %.7lf\nRotate %f %f %f %f\n"
+					"Disk %.4f %.4f 360\n\"Temp\" [ %.4f ]\nAttributeEnd\n",
+					(double)particle.position.x, (double)particle.position.y,
+					(double)particle.position.z,
+					angle, rot_dir.x, rot_dir.y, rot_dir.z, radius/3.f, radius,
+					(float)particle.temperature * temperature_scaling);
+			} else {
+				fprintf(file, "Translate %.7lf %.7lf %.7lf\nRotate %f %f %f %f\n"
+					"Disk %.4f %.4f 360\nAttributeEnd\n",
+					(double)particle.position.x, (double)particle.position.y,
+					(double)particle.position.z,
+					angle, rot_dir.x, rot_dir.y, rot_dir.z, radius/3.f, radius);
 			}
 		}
 	}

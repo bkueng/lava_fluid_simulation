@@ -137,6 +137,7 @@ struct SimulationConfig {
 	enum OutputFormat {
 		FormatPoint = 0, /** "point". render flat points */
 		FormatSphere,    /** "sphere". render spheres */
+		FormatDisk,      /** "disk". render (flat) disks */
 		FormatSurface    /** "surface". render a surface */
 	};
 	OutputFormat output_format = FormatPoint;

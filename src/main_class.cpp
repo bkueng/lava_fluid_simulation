@@ -324,6 +324,8 @@ void CMain::processArgs()
 			config.output_format = SimulationConfig::FormatPoint;
 		} else if(output_format == "sphere") {
 			config.output_format = SimulationConfig::FormatSphere;
+		} else if(output_format == "disk") {
+			config.output_format = SimulationConfig::FormatDisk;
 		} else if(output_format == "surface") {
 			config.output_format = SimulationConfig::FormatSurface;
 		} else {

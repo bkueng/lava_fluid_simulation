@@ -29,6 +29,8 @@ struct Particle {
 	dfloat density;
 	Math::Vec3f forces; /** sum of all forces */
 
+	Math::Vec3f density_gradient;
+
 	Particle* next_in_grid = NULL; /** linked list of particles in a grid cell */
 
 	Particle** neighbors = NULL; /** pointer to an array with its neighbors */
