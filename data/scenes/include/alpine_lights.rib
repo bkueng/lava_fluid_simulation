@@ -3,8 +3,8 @@ LightSource "ambientlight" 1 "intensity" 0.2
 #LightSource "distantlight" 2 "intensity" 0.3 "from" [-4 6 -7] "to" [0 0 0]
 #	"lightcolor" [1.0 0.4 1.0]
 LightSource "distantlight" 3 "intensity" 0.2 "from" [14 6 7] "to" [0 -2 0]
-	"lightcolor" [0.0 1.0 1.0]
+	"lightcolor" [1 1 1]
 
-LightSource "distantlight" 4 "intensity" 0.8 "from" [-4 6 7] "to" [0 0 0]
-	"lightcolor" [1.0 1 1.0]
+LightSource "distantlight" 4 "intensity" 0.9 "from" [-4 6 7] "to" [0 0 0]
+	"lightcolor" [1 1 1]
 
