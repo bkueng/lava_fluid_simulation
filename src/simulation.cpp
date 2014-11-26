@@ -505,8 +505,9 @@ void Simulation::writeOutput(int frame) {
 				fprintf(file, "Color [ %.3f %.3f %.3f ]\n", r, g, b);
 			}
 			//rotate z axis to -particle.gradient
-			Vec3f zaxis(0, 0, 1);
-			Vec3f grad = -particle.density_gradient.normalized();
+			Vec3f zaxis(0, 0, 1), grad(0, 1, 0);
+			if (particle.density_gradient.length2() > Math::FEQ_EPS)
+				grad = -particle.density_gradient.normalized();
 			float angle = acos(dot(zaxis, grad))*(180./M_PI);
 			Vec3f rot_dir = cross(zaxis, grad);
 			if (m_config.output_color == SimulationConfig::ColorShader) {
