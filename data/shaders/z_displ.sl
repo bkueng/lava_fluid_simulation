@@ -29,7 +29,7 @@ z_displ(
 			mask = float texture(mask_tex, xcomp(PNDC), ycomp(PNDC));
 		}
 
-		if (mask >= 0.95) {
+		if (mask >= 0.90) {
 			P = E + normalize(I) * zdist;
 
 			//TODO: add noise based on temperature (?)

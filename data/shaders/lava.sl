@@ -24,9 +24,14 @@ surface lava ( float Ka = 1, Kd = .5, Ks = .5, roughness = .1;
 	//culling
 	if (mask_tex != "") {
 		float mask = float texture(mask_tex, xcomp(PNDC), ycomp(PNDC));
-		if (mask < 0.95) {
+		float min_thres = 0.90;
+		float max_thres = 0.99;
+		if (mask < min_thres) {
 			Ci = 0;
 			Oi = 0; //set transparent
+		} else if (mask < max_thres) {
+			Oi = (mask-min_thres)/(max_thres-min_thres);
+			Ci *= Oi;
 		}
 	}
 }
