@@ -50,7 +50,8 @@
 		<rendering
 			pass0="data/scenes/alpine_surface_pass0.rib"
 			pass1="blur 0x2.4 normal"
-			pass2="data/scenes/alpine_surface_pass1.rib"
+			pass2="blur 0x0.5 temperature"
+			pass3="data/scenes/alpine_surface_pass1.rib"
 			constantwidth="0.006">
 		</rendering>
 	</output>

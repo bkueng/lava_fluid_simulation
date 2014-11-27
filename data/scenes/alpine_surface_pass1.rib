@@ -64,10 +64,11 @@ PointsPolygons
 			"uniform string normal_tex" "output/rendering/OUTPUT_DIRECTORY/normal.tif"
 			"uniform string temperature_tex" "output/rendering/OUTPUT_DIRECTORY/temperature.tif"
 			"Kd" 0.8
-			#"Ks" 0
-			"Ks" 0.3
-			"roughness" 0.4
-			"specularcolor" [ 1 0 0 ]
+			"Ks" 0.8
+			"roughness" 0.1
+			#"specularcolor" [ 1 0 0 ]
+			"specularcolor" [ 1 1 1 ]
+			#"specularcolor" [ 0.9686274 0.9764705 0.3137254 ]
 
 		ReadArchive "data/scenes/include/alpine_displ_plane.rib"
 	AttributeEnd
