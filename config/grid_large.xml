@@ -13,6 +13,14 @@
 		ground_spring="3000"
 		gravity="0 -9.81 0"
 		surface_air_threshold="0.4"
+
+		viscosity_coeff_a="0.002"
+		viscosity_coeff_b="10"
+
+		temperature_diffusion_coeff="90000"
+		temperature_diffusion_coeff_air="0.5"
+		temperature_diffusion_coeff_ground="19000000"
+
 		time_step="0.0001"
 		>
 		<!-- Note: this small timestep is needed to avoid instabilities.
@@ -29,7 +37,7 @@
 			max_pos="0.65 0.05 0.6"
 			count="40 20 40"
 			velocity="0 -0.3 0"
-			temperature="100"
+			temperature="1000"
 			calc_mass="true"
 			>
 		</particles_grid>
@@ -45,13 +53,15 @@
 			pass2="data/scenes/alpine_surface_pass1.rib"
 			constantwidth="0.006">
 		</rendering>
+	</output>
 		<!--
+	<output
 		format="point"
-		color="density">
+		color="temperature">
 		<rendering
 			pass0="data/scenes/alpine.rib"
 			constantwidth="0.003">
 		</rendering>
-		-->
 	</output>
+		-->
 </config>

@@ -19,6 +19,8 @@
 		viscosity_coeff_b="2"
 
 		temperature_diffusion_coeff="90000"
+		temperature_diffusion_coeff_air="0.2"
+		temperature_diffusion_coeff_ground="9000000"
 
 		surface_air_threshold="0.4"
 		>

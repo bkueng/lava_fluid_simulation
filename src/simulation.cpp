@@ -238,7 +238,19 @@ void Simulation::run() {
 						pos.y < height_field_val + max_ground_distance);
 			}
 
-			//TODO: air & ground temp diffusion
+			//FIXME: here we assume a particle is either at air or touches ground.
+			// if the volume is only 1 particle think, it can be both, ground & air.
+			// but simply testing for ground & air flag is not enough, because
+			// usually ground particles also have the air flag set.
+			if (particle.isOnGround()) {
+				dfloat r2_over_rho = m_particle_radius*m_particle_radius / particle.density;
+				particle.temperature += (m_config.temperature_ground - particle.temperature)
+						* r2_over_rho * dt * m_config.temperature_diffusion_coeff_ground;
+			} else if (particle.isAtAir()) {
+				dfloat r2_over_rho = m_particle_radius*m_particle_radius / particle.density;
+				particle.temperature += (pow(m_config.temperature_air, 4) - pow(particle.temperature, 4))
+						* r2_over_rho * dt * m_config.temperature_diffusion_coeff_air;
+			}
 
 
 			//make sure no particle leaves the field in y direction

@@ -96,6 +96,8 @@ struct SimulationConfig {
 				vi = b*exp(-a*T). a,b > 0. a smaller = flatter curve */
 
 	dfloat temperature_diffusion_coeff = 90000; /** diffusion coefficient inside volume */
+	dfloat temperature_diffusion_coeff_air = 0.2; /** diffusion coefficient volume <--> air */
+	dfloat temperature_diffusion_coeff_ground = 9000000; /** diffusion coefficient volume <--> ground */
 	dfloat temperature_air = 20; /** constant air temperature in degrees */
 	dfloat temperature_ground = 10;
 

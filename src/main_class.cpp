@@ -264,6 +264,10 @@ void CMain::processArgs()
 		config.temperature_ground = (dfloat)sim_node.attribute("temperature_ground").as_double(10);
 		config.temperature_diffusion_coeff = (dfloat)sim_node.attribute(
 				"temperature_diffusion_coeff").as_double(90000);
+		config.temperature_diffusion_coeff_air = (dfloat)sim_node.attribute(
+				"temperature_diffusion_coeff_air").as_double(0.2);
+		config.temperature_diffusion_coeff_ground = (dfloat)sim_node.attribute(
+				"temperature_diffusion_coeff_ground").as_double(9000000);
 		config.surface_ground_radius_factor = (dfloat)sim_node.attribute(
 				"surface_ground_radius_factor").as_double(0.1);
 		config.surface_air_threshold = (dfloat)sim_node.attribute(
