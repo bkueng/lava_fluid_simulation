@@ -6,6 +6,7 @@ Option "limits" "bucketsize" [ 64 64 ]
 Option "limits" "gridsize" [ 256 ]
 Option "limits" "eyesplits" [ 6 ]
 
+# data output rendering pass
 
 FrameBegin 1
 PixelFilter "box" 1 1
@@ -26,6 +27,29 @@ ReadArchive "data/scenes/include/alpine_camera.rib"
 
 WorldBegin
 	# no lights needed here
+
+
+    AttributeBegin
+        Attribute "identifier" "name" [ "heightfield" ]
+		Color [ 0.8 1 1 ]
+        Opacity [ 1.0 1.0 1.0 ]
+
+		# shading rate: decrease for better quality (~0.5 or lower) & to avoid
+		# artifacts. increase for better speed
+		ShadingRate 3
+		Matte 1
+		Attribute "displacementbound" "sphere" [ 0.5 ] "coordinatesystem" [ "surface" ]
+		Displacement "bumpy"
+			"uniform float amplitude" [ -0.4 ]
+			"uniform string texturename" "HEIGHT_FIELD_FILE"
+
+
+PointsPolygons
+ [ 3 3 3 3 3 3 3 3 ]
+ [ 0 1 4 0 4 3 1 2 5 1 5 4 3 4 7 3 7 6 4 5 8 4 8 7 ]
+ "P" [ 0.0000000 0.0000000 0.0000000 0.5000000 0.0000000 0.0000000 1.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.5000000 0.5000000 0.0000000 0.5000000 1.0000000 0.0000000 0.5000000 0.0000000 0.0000000 1.0000000 0.5000000 0.0000000 1.0000000 1.0000000 0.0000000 1.0000000 ]
+ "st" [ 0.00000 1.00000 0.50000 1.00000 1.00000 1.00000 0.00000 0.50000 0.50000 0.50000 1.00000 0.50000 0.00000 0.00000 0.50000 0.00000 1.00000 0.00000 ]
+    AttributeEnd
 
 	# particles
     AttributeBegin

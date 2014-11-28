@@ -130,7 +130,7 @@ height_scaling_larger=`echo "$height_scaling+0.1" | bc`
 
 echo "Render Passes: ${render_passes[@]}"
 
-# init tmp rendering files
+# init tmp rendering files: copy the main scene file(s) & apply config variables
 scene_files_tmp=()
 for render_pass in "${render_passes[@]}"; do
 	case "$render_pass" in
@@ -141,6 +141,18 @@ for render_pass in "${render_passes[@]}"; do
 			scene_file_tmp="$(mktemp -t "render_${base_name}.XXXXXXXXXX.rib")"
 			scene_files_tmp+=( "$scene_file_tmp" )
 			cp "$render_pass" "$scene_file_tmp"
+
+			# iterate 'remove_line_from_scene' & apply to scene file
+			i=1
+			line="x"
+			while [[ "$line" != "" ]]; do
+				line="$(getxmlattr "$config_file" "/config/output/rendering/remove_line_from_scene[$i]/@match")"
+				if [[ "$line" != "" ]]; then
+					line_esc="$(echo "$line" | sed -e 's/[\/&]/\\&/g')"
+					sed -i.tmp "/$line_esc/d" "$scene_file_tmp"
+				fi
+				let i="$i+1"
+			done
 
 			# replace directories
 			sed -i.tmp "s/OUTPUT_DIRECTORY/${base_name}/g" "$scene_file_tmp"
