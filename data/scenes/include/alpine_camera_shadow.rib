@@ -1,0 +1,15 @@
+
+Clipping 0.1 30
+
+# fov is the light "coneangle" * 2 in degrees
+Projection "perspective" "fov" 68.75493541569878505216
+
+# use simulator --camera-matrix with the light "point from" and "point to"
+# vectors to generate this matrix
+Transform [
+   -0.86824316   -0.38624358   -0.31139955    0.00000000
+    0.00000000    0.62764591   -0.77849895    0.00000000
+    0.49613887   -0.67592639   -0.54494929    0.00000000
+    0.18605214    0.53108501    1.71269774    1.00000000
+   ]
+

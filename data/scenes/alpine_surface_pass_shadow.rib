@@ -1,0 +1,58 @@
+
+Format 800 800 1
+Hider "hidden"
+
+Option "limits" "bucketsize" [ 64 64 ]
+Option "limits" "gridsize" [ 256 ]
+Option "limits" "eyesplits" [ 6 ]
+
+# shadow rendering pass with camera perspective from the light
+
+FrameBegin 1
+
+Declare "Temp" "uniform float"
+Display "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tif" "zfile" "z"
+
+ReadArchive "data/scenes/include/alpine_camera_shadow.rib"
+
+WorldBegin
+	ReadArchive "data/scenes/include/alpine_lights.rib"
+	Illuminate 2 1
+
+    AttributeBegin
+        Attribute "identifier" "name" [ "heightfield" ]
+		Color [ 0.8 1 1 ]
+        Opacity [ 1.0 1.0 1.0 ]
+        Surface "paintedplasticglow" 
+            "float Ks" 0.3
+            "float Kd" 0.5
+            "float Ka" 1.0
+            "float roughness" 0.10000000149011612
+            "color specularcolor" [ 1.0 1.0 1.0 ]
+            "string texturename" "HEIGHT_FIELD_FILE"
+#			"string glow_tex" "output/rendering/OUTPUT_DIRECTORY/surface.tif"
+			"float glow_amp" 0.4
+
+		ShadingRate 10
+		Attribute "displacementbound" "sphere" [ 0.5 ] "coordinatesystem" [ "surface" ]
+		Displacement "bumpy"
+			"uniform float amplitude" [ -0.4 ]
+			"uniform string texturename" "HEIGHT_FIELD_FILE"
+
+
+PointsPolygons
+ [ 3 3 3 3 3 3 3 3 ]
+ [ 0 1 4 0 4 3 1 2 5 1 5 4 3 4 7 3 7 6 4 5 8 4 8 7 ]
+ "P" [ 0.0000000 0.0000000 0.0000000 0.5000000 0.0000000 0.0000000 1.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.5000000 0.5000000 0.0000000 0.5000000 1.0000000 0.0000000 0.5000000 0.0000000 0.0000000 1.0000000 0.5000000 0.0000000 1.0000000 1.0000000 0.0000000 1.0000000 ]
+ "st" [ 0.00000 1.00000 0.50000 1.00000 1.00000 1.00000 0.00000 0.50000 0.50000 0.50000 1.00000 0.50000 0.00000 0.00000 0.50000 0.00000 1.00000 0.00000 ]
+    AttributeEnd
+
+# we cannot render the surface here because we use a different camera
+# perspective!
+# this means no shadows from the surface.
+
+WorldEnd
+MakeShadow "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tif" "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tx"
+FrameEnd
+
+

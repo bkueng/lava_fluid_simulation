@@ -20,13 +20,34 @@ ReadArchive "data/scenes/include/alpine_camera.rib"
 
 WorldBegin
 	ReadArchive "data/scenes/include/alpine_lights.rib"
+	AttributeBegin
+		Attribute "identifier" "name" [ "Sun" ]
+		LightSource "newshadowspot" 3
+			# same settings as the other light
+			"float intensity" [ 1.2 ]
+			"point from" [ 0.9 1. 1.2 ]
+			"point to" [ 0.5 0 0.5 ]
+			"color lightcolor" [ 1.0 1.0 1.0 ]
+			"float coneangle" [ 0.6 ]
+			"float conedeltaangle" [ 0.1 ]
+
+			"uniform float bias" [ 0.015 ] #[ 0.01 ]
+			"uniform float falloff" [ 2 ] #[ 2 ]
+			"uniform float blur" [ 0.01 ] #[ 0 ]
+			"uniform float width" [ 1 ] #[ 1 ]
+			"uniform float samples" [ 64 ] #[ 16 ]
+			"uniform string shadowname" [ "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tx" ]
+			"uniform float beamdistribution" [ 2 ] #[ 2 ]
+	AttributeEnd
+	Illuminate 3 1
+	Illuminate 2 0
 
     AttributeBegin
         Attribute "identifier" "name" [ "heightfield" ]
 		Color [ 0.8 1 1 ]
         Opacity [ 1.0 1.0 1.0 ]
         Surface "paintedplasticglow" 
-            "float Ks" 0.5
+            "float Ks" 0.3
             "float Kd" 0.5
             "float Ka" 1.0
             "float roughness" 0.10000000149011612

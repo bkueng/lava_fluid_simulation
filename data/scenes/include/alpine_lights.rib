@@ -1,10 +1,12 @@
 
 LightSource "ambientlight" 1 "intensity" 0.2
-#LightSource "distantlight" 2 "intensity" 0.3 "from" [-4 6 -7] "to" [0 0 0]
-#	"lightcolor" [1.0 0.4 1.0]
-LightSource "distantlight" 3 "intensity" 0.2 "from" [14 6 7] "to" [0 -2 0]
-	"lightcolor" [1 1 1]
 
-LightSource "distantlight" 4 "intensity" 0.9 "from" [-4 6 7] "to" [0 0 0]
-	"lightcolor" [1 1 1]
+Attribute "identifier" "name" [ "SunForShadow" ]
+LightSource "spotlight" 2
+	"float intensity" [ 1.2 ]
+	"point from" [ 0.9 1. 1.2 ]
+	"point to" [ 0.5 0 0.5 ]
+	"color lightcolor" [ 1.0 1.0 1.0 ]
+	"float coneangle" [ 0.6 ]
+	"float conedeltaangle" [ 0.1 ]
 

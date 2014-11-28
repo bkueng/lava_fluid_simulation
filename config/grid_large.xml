@@ -76,9 +76,10 @@
 			pass3="data/scenes/alpine_surface_pass1.rib"
 			pass4="blur 0x8 surface"
 			pass5="temporalblur 3 surface"
-			pass6="data/scenes/alpine_surface_pass2.rib"
-			pass7="temporalblur 1"
-			constantwidth="0.005"
+			pass6="data/scenes/alpine_surface_pass_shadow.rib"
+			pass7="data/scenes/alpine_surface_pass2.rib"
+			pass8="temporalblur 1"
+			constantwidth="0.005>
 			min_temperature="0.67">
 		</rendering>
 	</output>
