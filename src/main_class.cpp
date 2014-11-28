@@ -18,6 +18,8 @@
 #include "simulation.h"
 #include "version.h"
 
+#include <Math/Mat44.h>
+
 using namespace Math;
 using namespace pugi;
 
@@ -77,6 +79,8 @@ void CMain::parseCommandLine(int argc, char* argv[])
 	m_parameters->addSwitch("simulate", 's');
 	m_parameters->addParam("generate-rib-heightfield", 'g');
 
+	m_parameters->addSwitch("camera-matrix", ' ');
+
 	m_parameters->addParam("frames", 'f');
 	m_parameters->addSwitch("print-density", ' ');
 	
@@ -101,6 +105,8 @@ void CMain::printHelp()
 		   "                                  create a RIB file for rendering\n"
 		   "                                  from the configured height field\n"
 		   "                                  and write the result to <file> (eg height_field.rib)\n"
+		   "  --camera-matrix                 create a camera transformation matrix from eye,\n"
+		   "                                  center & up vectors using stdin (same as gluLookAt)\n"
 		   "\n"
 		   " options\n"
 		   "  -f, --frames <num_frames>       limit number of simulated frames\n"
@@ -192,6 +198,36 @@ void CMain::processArgs()
 			CLog::getInstance().setFileLevel(log_level);
 	}
 
+	if(m_parameters->getSwitch("camera-matrix")) {
+		Vec3f eye, center, up(0, 1, 0);
+		printf("Enter eye vector (3 floats): ");
+		cin >> eye;
+		printf("Enter center vector: ");
+		cin >> center;
+		printf("Enter center vector (usually=[0 1 0]): ");
+		cin >> up;
+
+		cout << "Eye: " << eye << endl;
+		cout << "Center: " << center << endl;
+		cout << "Up: " << up << endl;
+
+		/* calculate the matrix */
+		Mat44f mat;
+		Vec3f z  = center - eye;  z.normalize();
+		Vec3f x  = cross(up, z); x.normalize();
+		Vec3f y  = cross(z, x);  y.normalize();
+		Vec3f tr = -eye;
+		mat.set(x.x, x.y, x.z, dot(x, tr),
+				y.x, y.y, y.z, dot(y, tr),
+				z.x, z.y, z.z, dot(z, tr),
+				0,   0,   0,           1);
+		mat.transpose();
+		cout.setf(ios::fixed);
+		cout << "Transformation Matrix (transposed to be used in a RIB file):"
+				<< endl << std::setprecision(8) << mat << endl;
+
+		return;
+	}
 
 
 	bool do_simulate = true;
