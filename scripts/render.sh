@@ -24,6 +24,7 @@ usage() {
 	echo "                            select renderer (default=$renderer)"
 	echo "       -t,--timeout <timeout>"
 	echo "                            set rendering timeout in sec (for stuck rendering)"
+	echo "       --threads <threads>  maximum number of threads for rendering & image blurring"
 	exit -1
 
 }
@@ -61,7 +62,7 @@ render() {
 	echo "Rendering $file (Pass $pass)"
 	runs=4 #max retries
 	while [ $runs -gt 0 ]; do
-		$timeout_prefix $renderer "$scene_file_tmp"
+		$timeout_prefix $renderer $threads_renderer_params "$scene_file_tmp"
 		ret=$?
 		[[ $ret -eq 0 ]] && runs=0
 		let runs="$runs-1"
@@ -71,6 +72,7 @@ render() {
 frames=""
 timeout_prefix=""
 renderer=rndr #pixie renderer binary
+threads_renderer_params=""
 [ ! -f "$config_file" ] && echo "Error: no/invalid config file given" && usage
 #parse parameters
 shift
@@ -92,6 +94,11 @@ do
 			;;
 		-t|--timeout)
 			timeout_prefix="timeout $1"
+			shift
+			;;
+		--threads)
+			threads_renderer_params="-t:$1"
+			export OMP_NUM_THREADS=$1
 			shift
 			;;
 		*)
