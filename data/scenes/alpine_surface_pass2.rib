@@ -32,7 +32,7 @@ WorldBegin
             "float roughness" 0.10000000149011612
             "color specularcolor" [ 1.0 1.0 1.0 ]
             "string texturename" "HEIGHT_FIELD_FILE"
-			"string glow_tex" "output/rendering/OUTPUT_DIRECTORY/surface.tif"
+			"string glow_tex" "output/rendering/OUTPUT_DIRECTORY/tblur_surface_out_000000.tif"
 			"float glow_amp" 0.4
 
 		# shading rate: decrease for better quality (~0.5 or lower) & to avoid
@@ -56,12 +56,12 @@ PointsPolygons
 		Color [ 1 0.20 0.05 ]
 		Attribute "displacementbound" "sphere" [ 5 ] "coordinatesystem" [ "surface" ]
 		Displacement "z_displ"
-			"uniform string displ_tex" "output/rendering/OUTPUT_DIRECTORY/zdist.tif"
-			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask.tif"
+			"uniform string displ_tex" "output/rendering/OUTPUT_DIRECTORY/zdist_out_000000.tif"
+			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif"
 		Surface "lava"
-			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask.tif"
-			"uniform string normal_tex" "output/rendering/OUTPUT_DIRECTORY/normal.tif"
-			"uniform string temperature_tex" "output/rendering/OUTPUT_DIRECTORY/temperature.tif"
+			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif"
+			"uniform string normal_tex" "output/rendering/OUTPUT_DIRECTORY/normal_out_000000.tif"
+			"uniform string temperature_tex" "output/rendering/OUTPUT_DIRECTORY/temperature_out_000000.tif"
 			"Kd" 0.8
 			"Ks" 0.8
 			"roughness" 0.1

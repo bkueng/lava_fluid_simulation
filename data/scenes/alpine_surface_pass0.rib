@@ -16,11 +16,11 @@ Declare "Mask" "varying float"
 Declare "Zdist" "varying float"
 Declare "Temp" "uniform float"
 Declare "TempOut" "varying float"
-Display "+output/rendering/OUTPUT_DIRECTORY/normal.tif" "tiff" "Nn" "quantize" [128 255 0 255]
-Display "+output/rendering/OUTPUT_DIRECTORY/mask.tif" "tiff" "Mask" "quantize" [0 255 0 255]
+Display "+output/rendering/OUTPUT_DIRECTORY/normal_out_000000.tif" "tiff" "Nn" "quantize" [128 255 0 255]
+Display "+output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif" "tiff" "Mask" "quantize" [0 255 0 255]
 # restricts max z value to 20 (in camera space)
-Display "+output/rendering/OUTPUT_DIRECTORY/zdist.tif" "tiff" "Zdist" "quantize" [0 3277 0 65535]
-Display "+output/rendering/OUTPUT_DIRECTORY/temperature.tif" "tiff" "TempOut"
+Display "+output/rendering/OUTPUT_DIRECTORY/zdist_out_000000.tif" "tiff" "Zdist" "quantize" [0 3277 0 65535]
+Display "+output/rendering/OUTPUT_DIRECTORY/temperature_out_000000.tif" "tiff" "TempOut"
 	"quantize" [0 65535 0 65535]
 
 ReadArchive "data/scenes/include/alpine_camera.rib"

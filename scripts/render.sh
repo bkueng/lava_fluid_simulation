@@ -53,13 +53,12 @@ getxmlattr() {
 render() {
 	scene_file_tmp="$1"
 	file="$2"
-	pass="$3"
 	file_name="$(basename -s .rib "$file")"
 	frame_nr="${file_name:6}"
 
 	sed -i.tmp "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
 	sed -i.tmp "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp"
-	echo "Rendering $file (Pass $pass)"
+	echo "Rendering $file"
 	runs=4 #max retries
 	while [ $runs -gt 0 ]; do
 		$timeout_prefix $renderer $threads_renderer_params "$scene_file_tmp"
@@ -122,7 +121,7 @@ export SHADERS=data/shaders
 
 # parse config file
 render_passes=()
-for i in `seq 0 10`; do
+for i in `seq 0 15`; do
 	scene_file="$(getxmlattr "$config_file" "/config/output/rendering/@pass$i")"
 	[ "$scene_file" != "" ] && render_passes+=( "$scene_file" )
 done
@@ -141,7 +140,7 @@ echo "Render Passes: ${render_passes[@]}"
 scene_files_tmp=()
 for render_pass in "${render_passes[@]}"; do
 	case "$render_pass" in
-		blur*)
+		blur*|temporalblur*)
 			scene_files_tmp+=( "" )
 			;;
 		*.rib)
@@ -182,41 +181,104 @@ for render_pass in "${render_passes[@]}"; do
 	esac
 done
 
+temporalBlur() {
+	args="$1"
+	frame_nr="$2"
+	file_prefix=""
+	filter_size="${args% *}"
+	if [[ "$args" == *" "* ]]; then
+		file_prefix="${args#* }_"
+	fi
+
+	file_out="$rendering_dir/tblur_${file_prefix}out_${frame_nr}.tif"
+	file_in_cur="$rendering_dir/${file_prefix}out_${frame_nr}.tif"
+	case "$filter_size" in
+	1)
+		filter_idx=( -1 0 1 )
+		filter_factor=( 0.25 0.5 0.25 )
+		;;
+	2)
+		filter_idx=( -2 -1 0 1 2 )
+		filter_factor=( 0.15 0.2 0.3 0.2 0.15 )
+		;;
+	3)
+		filter_idx=( -3 -2 -1 0 1 2 3 )
+		filter_factor=(0.1052 0.13157 0.15789 0.21052 0.15789 0.13157 0.1052 )
+		;;
+	*)
+		echo "Error: unsupported temporal filter size $filter_size"
+		exit -1
+		;;
+	esac
+	convert_args=""
+
+	idx=0
+	file_not_found=0
+	while [[ "$idx" -lt "${#filter_idx[@]}" ]]; do
+		add=${filter_idx[$idx]}
+		factor=${filter_factor[$idx]}
+		frame_nr_t="$(printf "%06i" $((10#$frame_nr + $add)))"
+		file_in="$rendering_dir/${file_prefix}out_${frame_nr_t}.tif"
+		if [[ ! -f "$file_in" ]]; then
+			echo "Info: $file_in does not exist. no temporal blur is applied"
+			file_not_found=1
+		fi
+		convert_args="$convert_args ( $file_in -evaluate Multiply $factor )"
+		let idx="$idx+1"
+	done
+
+	if [[ $file_not_found = 1 ]]; then
+		# subsequent render passes expect the file to exist
+		cp "$file_in_cur" "$file_out"
+	else
+		#FIXME: alpha channel is handled in a weird way here (by ImageMagick),
+		#but it seems to work anyway
+		convert $convert_args -evaluate-sequence sum -channel a -negate "$file_out"
+	fi
+}
+
 renderPass() {
 	file="$1" #frame to render
-	# iterate passes
-	i=0
-	while [[ "$i" -lt "${#render_passes[@]}" ]]; do
-		render_pass="${render_passes[$i]}"
+	i="$2" #render pass
+	render_pass="${render_passes[$i]}"
+	file_name="$(basename -s .rib "$file")"
+	frame_nr="${file_name:6}"
 
-		case "$render_pass" in
-			blur*)
-				file_base=${render_pass##* }
-				echo "Blurring $file_base (Pass $i)"
-				file_blur="$rendering_dir/${file_base}.tif"
-				blur="${render_pass% *}"
-				convert "$file_blur" -$blur "$file_blur"
-				;;
-			*.rib)
-				scene_file_tmp="${scene_files_tmp[$i]}"
-				render "$scene_file_tmp" "$file" "$i"
-				;;
-		esac
-		let i="$i+1"
-	done
+	case "$render_pass" in
+		temporalblur*)
+			echo "Temporal blurring $frame_nr"
+			temporalBlur "${render_pass#* }" "$frame_nr"
+			;;
+		blur*)
+			file_base=${render_pass##* }
+			file_blur="$rendering_dir/${file_base}_out_${frame_nr}.tif"
+			blur="${render_pass% *}"
+			echo "Blurring $file_blur"
+			convert "$file_blur" -$blur "$file_blur"
+			;;
+		*.rib)
+			scene_file_tmp="${scene_files_tmp[$i]}"
+			render "$scene_file_tmp" "$file" "$i"
+			;;
+	esac
 }
 
 # iterate frames & render
-if [ "$frames" = "" ]; then
-	for file in $data_dir/frame_*.rib; do
-		renderPass "$file"
-	done
-else
-	for frame in $frames; do
-		file="$(printf "$data_dir/frame_%06i.rib" $frame)"
-		renderPass "$file"
-	done
-fi
+i=0
+while [[ "$i" -lt "${#render_passes[@]}" ]]; do
+	echo "Rendering Pass $i"
+	if [ "$frames" = "" ]; then
+		for file in $data_dir/frame_*.rib; do
+			renderPass "$file" $i
+		done
+	else
+		for frame in $frames; do
+			file="$(printf "$data_dir/frame_%06i.rib" $frame)"
+			renderPass "$file" $i
+		done
+	fi
+	let i="$i+1"
+done
 
 for scene_file_tmp in "${scene_files_tmp[@]}"; do
 	[ "$scene_file_tmp" != "" ] && \
