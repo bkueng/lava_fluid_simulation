@@ -475,11 +475,11 @@ void Simulation::writeOutput(int frame) {
 				default:
 					break;
 				}
-				fprintf(file, "Color [ %.3f %.3f %.3f ]\n", r, g, b);
+				fprintf(file, "Color[%.3f %.3f %.3f]\n", r, g, b);
 			}
 			if (m_config.output_color == SimulationConfig::ColorShader) {
 				fprintf(file, "Translate %.7lf %.7lf %.7lf\n"
-					"Sphere %.4f -%.4f %.4f 360\n\"Temp\" [ %.4f ]\nAttributeEnd\n",
+					"Sphere %.4f -%.4f %.4f 360\n\"Temp\"[%.4f]\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
 					radius, radius, radius, (float)particle.temperature * temperature_scaling);
@@ -514,7 +514,7 @@ void Simulation::writeOutput(int frame) {
 				default:
 					break;
 				}
-				fprintf(file, "Color [ %.3f %.3f %.3f ]\n", r, g, b);
+				fprintf(file, "Color[%.3f %.3f %.3f]\n", r, g, b);
 			}
 			//rotate z axis to -particle.gradient
 			Vec3f zaxis(0, 0, 1), grad(0, 1, 0);
@@ -524,7 +524,7 @@ void Simulation::writeOutput(int frame) {
 			Vec3f rot_dir = cross(zaxis, grad);
 			if (m_config.output_color == SimulationConfig::ColorShader) {
 				fprintf(file, "Translate %.7lf %.7lf %.7lf\nRotate %f %f %f %f\n"
-					"Disk %.4f %.4f 360\n\"Temp\" [ %.4f ]\nAttributeEnd\n",
+					"Disk %.4f %.4f 360\n\"Temp\"[%.4f]\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
 					angle, rot_dir.x, rot_dir.y, rot_dir.z, radius/3.f, radius,
