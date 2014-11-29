@@ -53,7 +53,7 @@ getxmlattr() {
 render() {
 	scene_file_tmp="$1"
 	file="$2"
-	file_name="$(basename -s .rib "$file")"
+	file_name="$(basename "$file" .rib)"
 	frame_nr="${file_name:6}"
 
 	sed -i.tmp "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
@@ -111,7 +111,7 @@ command -v "$renderer" >/dev/null 2>&1 || \
 	{ echo >&2 "Error: renderer \"$renderer\" not found. Is Pixie installed??"; exit 1; }
 
 # data input & rendering directory
-base_name="$(basename -s .xml "$config_file")"
+base_name="$(basename "$config_file" .xml)"
 data_dir="output/simulation/$base_name"
 rendering_dir="output/rendering/$base_name"
 mkdir -p "$rendering_dir" &>/dev/null
@@ -241,7 +241,7 @@ renderPass() {
 	file="$1" #frame to render
 	i="$2" #render pass
 	render_pass="${render_passes[$i]}"
-	file_name="$(basename -s .rib "$file")"
+	file_name="$(basename "$file" .rib)"
 	frame_nr="${file_name:6}"
 
 	case "$render_pass" in
