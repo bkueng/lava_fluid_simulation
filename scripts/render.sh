@@ -25,6 +25,7 @@ usage() {
 	echo "       -t,--timeout <timeout>"
 	echo "                            set rendering timeout in sec (for stuck rendering)"
 	echo "       --threads <threads>  maximum number of threads for rendering & image blurring"
+	echo "       --tasks <tasks>      amount of tasks to execute in parallel (defaults to 1)"
 	exit -1
 
 }
@@ -55,23 +56,29 @@ render() {
 	file="$2"
 	file_name="$(basename "$file" .rib)"
 	frame_nr="${file_name:6}"
+	# make a local copy because we need to modify the file & other tasks may run
+	# in parallel
+	scene_file_tmp_loc="${scene_file_tmp}.$frame_nr"
+	cp "$scene_file_tmp" "$scene_file_tmp_loc"
 
-	sed -i.tmp "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp"
-	sed -i.tmp "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp"
+	sed -i.tmp "s/frame_[0-9]\{6\}.rib/frame_${frame_nr}.rib/g" "$scene_file_tmp_loc"
+	sed -i.tmp "s/out_[0-9]\{6\}.tif/out_${frame_nr}.tif/g" "$scene_file_tmp_loc"
 	echo "Rendering $file"
 	runs=4 #max retries
 	while [ $runs -gt 0 ]; do
-		$timeout_prefix $renderer $threads_renderer_params "$scene_file_tmp"
+		$timeout_prefix $renderer $threads_renderer_params "$scene_file_tmp_loc"
 		ret=$?
 		[[ $ret -eq 0 ]] && runs=0
 		let runs="$runs-1"
 	done
+	rm "$scene_file_tmp_loc" "${scene_file_tmp_loc}.tmp" &>/dev/null
 }
 
 frames=""
 timeout_prefix=""
 renderer=rndr #pixie renderer binary
 threads_renderer_params=""
+num_tasks=1
 [ ! -f "$config_file" ] && echo "Error: no/invalid config file given" && usage
 #parse parameters
 shift
@@ -98,6 +105,10 @@ do
 		--threads)
 			threads_renderer_params="-t:$1"
 			export OMP_NUM_THREADS=$1
+			shift
+			;;
+		--tasks)
+			num_tasks="$1"
 			shift
 			;;
 		*)
@@ -180,6 +191,20 @@ for render_pass in "${render_passes[@]}"; do
 			;;
 	esac
 done
+
+# let multiple passes run in background
+running_pids=()
+waitTasks() {
+	wait ${running_pids[@]}
+	running_pids=()
+}
+newTask() {
+	task_pid=$1
+	running_pids+=( $task_pid )
+	if [[ ${#running_pids[@]} -ge "$num_tasks" ]]; then
+		waitTasks
+	fi
+}
 
 temporalBlur() {
 	args="$1"
@@ -269,15 +294,18 @@ while [[ "$i" -lt "${#render_passes[@]}" ]]; do
 	echo "Rendering Pass $i"
 	if [ "$frames" = "" ]; then
 		for file in $data_dir/frame_*.rib; do
-			renderPass "$file" $i
+			renderPass "$file" $i &
+			newTask $!
 		done
 	else
 		for frame in $frames; do
 			file="$(printf "$data_dir/frame_%06i.rib" $frame)"
-			renderPass "$file" $i
+			renderPass "$file" $i &
+			newTask $!
 		done
 	fi
 	let i="$i+1"
+	waitTasks
 done
 
 for scene_file_tmp in "${scene_files_tmp[@]}"; do
