@@ -33,7 +33,7 @@ WorldBegin
             "color specularcolor" [ 1.0 1.0 1.0 ]
             "string texturename" "HEIGHT_FIELD_FILE"
 			"string glow_tex" "output/rendering/OUTPUT_DIRECTORY/tblur_surface_out_000000.tif"
-			"float glow_amp" 0.4
+			"float glow_amp" 0.8
 
 		# shading rate: decrease for better quality (~0.5 or lower) & to avoid
 		# artifacts. increase for better speed
@@ -68,6 +68,7 @@ PointsPolygons
 			#"specularcolor" [ 1 0 0 ]
 			"specularcolor" [ 1 1 1 ]
 			#"specularcolor" [ 0.9686274 0.9764705 0.3137254 ]
+			"min_temperature" 0.6
 
 		ReadArchive "data/scenes/include/alpine_displ_plane.rib"
 	AttributeEnd
