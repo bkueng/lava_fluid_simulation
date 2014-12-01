@@ -14,8 +14,8 @@
 		gravity="0 -9.81 0"
 		surface_air_threshold="0.4"
 
-		viscosity_coeff_a="0.002"
-		viscosity_coeff_b="10"
+		viscosity_coeff_a="0.005456"
+		viscosity_coeff_b="316.96145"
 
 		temperature_diffusion_coeff="90000"
 		temperature_diffusion_coeff_air="0.5"
