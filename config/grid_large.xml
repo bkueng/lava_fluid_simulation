@@ -61,10 +61,10 @@
 		<rendering
 			pass0="data/scenes/alpine_surface_pass0.rib"
 			pass1="blur 0x2.4 normal"
-			pass2="blur 0x0.5 temperature"
+			pass2="blur 0x0.3 temperature"
 			pass3="data/scenes/alpine_surface_pass2.rib"
 			pass4="temporalblur 1"
-			constantwidth="0.006"
+			constantwidth="0.005"
 			min_temperature="0.67">
 			<remove_line_from_scene match="surface.tif"></remove_line_from_scene>
 		</rendering>
@@ -76,13 +76,13 @@
 		<rendering
 			pass0="data/scenes/alpine_surface_pass0.rib"
 			pass1="blur 0x2.4 normal"
-			pass2="blur 0x0.15 temperature"
+			pass2="blur 0x0.3 temperature"
 			pass3="data/scenes/alpine_surface_pass1.rib"
 			pass4="blur 0x8 surface"
 			pass5="temporalblur 3 surface"
 			pass6="data/scenes/alpine_surface_pass2.rib"
 			pass7="temporalblur 1"
-			constantwidth="0.006"
+			constantwidth="0.005"
 			min_temperature="0.67">
 		</rendering>
 	</output>
