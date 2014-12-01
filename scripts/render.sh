@@ -248,7 +248,7 @@ temporalBlur() {
 			echo "Info: $file_in does not exist. no temporal blur is applied"
 			file_not_found=1
 		fi
-		convert_args="$convert_args ( $file_in -evaluate Multiply $factor )"
+		convert_args="$convert_args ( $file_in -background black -alpha Remove -evaluate Multiply $factor )"
 		let idx="$idx+1"
 	done
 
@@ -256,9 +256,7 @@ temporalBlur() {
 		# subsequent render passes expect the file to exist
 		cp "$file_in_cur" "$file_out"
 	else
-		#FIXME: alpha channel is handled in a weird way here (by ImageMagick),
-		#but it seems to work anyway
-		convert $convert_args -evaluate-sequence sum -channel a -negate "$file_out"
+		convert $convert_args -evaluate-sequence sum "$file_out"
 	fi
 }
 
@@ -279,7 +277,7 @@ renderPass() {
 			file_blur="$rendering_dir/${file_base}_out_${frame_nr}.tif"
 			blur="${render_pass% *}"
 			echo "Blurring $file_blur"
-			convert "$file_blur" -$blur "$file_blur"
+			convert "$file_blur" -background black -alpha Remove -$blur "$file_blur"
 			;;
 		*.rib)
 			scene_file_tmp="${scene_files_tmp[$i]}"

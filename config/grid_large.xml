@@ -77,7 +77,7 @@
 			pass1="blur 0x2.4 normal"
 			pass2="blur 0x0.15 temperature"
 			pass3="data/scenes/alpine_surface_pass1.rib"
-			pass4="blur 0x2.5 surface"
+			pass4="blur 0x8 surface"
 			pass5="temporalblur 3 surface"
 			pass6="data/scenes/alpine_surface_pass2.rib"
 			pass7="temporalblur 1"
