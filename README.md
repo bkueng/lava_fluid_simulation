@@ -33,7 +33,7 @@ RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 ##### Example #####
 `$ ./simulator -c config/grid_simple.xml -f 100`
 `$ ./scripts/render.sh config/grid_simple.xml -r <pixie_bin>/rndr`
-`$ ./scripts/video.sh output/rendering/grid_simple 20`
+`$ ./scripts/video.sh output/rendering/grid_simple --fps 20`
 
 ##### Configuration #####
 How to setup & tune configuraton parameters:
