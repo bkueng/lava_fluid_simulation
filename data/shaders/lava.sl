@@ -5,7 +5,8 @@ surface lava ( float Ka = 1, Kd = .5, Ks = .5, roughness = .1;
 						 string normal_tex = "";
 						 string mask_tex = "";
 						 string temperature_tex = "";
-						 float min_temperature = 0.6;) {
+						 float min_temperature = 0.6;
+						 float max_temperature = 1;) {
 
 	Ci = Cs;
 
@@ -51,7 +52,8 @@ surface lava ( float Ka = 1, Kd = .5, Ks = .5, roughness = .1;
 				temperature = float texture(temperature_tex, xcomp(PNDC), ycomp(PNDC));
 
 
-				temperature = clamp((temperature-min_temperature)/(1-min_temperature), 0, 1);
+				temperature = clamp((temperature-min_temperature)
+						/ (max_temperature-min_temperature), 0, 1);
 
 
 				//add high freq noise
