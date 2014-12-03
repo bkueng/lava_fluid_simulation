@@ -58,6 +58,7 @@ PointsPolygons
 			"specularcolor" [ 1 1 1 ]
 			#"specularcolor" [ 0.9686274 0.9764705 0.3137254 ]
 			"min_temperature" 0.6
+			"max_temperature" 1
 
 		ReadArchive "data/scenes/include/alpine_displ_plane.rib"
 	AttributeEnd

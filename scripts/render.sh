@@ -145,6 +145,9 @@ height_scaling="$(getxmlattr "$config_file" "/config/simulation/heightfield/@sca
 height_scaling_larger=`echo "$height_scaling+0.1" | bc`
 #height_scaling_larger=`echo "$height_scaling 0.1" | awk '{printf "%f", $1 + $2}'`
 min_temperature="$(getxmlattr "$config_file" "/config/output/rendering/@min_temperature")"
+[ "$min_temperature" = "" ] && min_temperature="0.6"
+max_temperature="$(getxmlattr "$config_file" "/config/output/rendering/@max_temperature")"
+[ "$max_temperature" = "" ] && max_temperature="1"
 
 echo "Render Passes: ${render_passes[@]}"
 
@@ -186,6 +189,7 @@ for render_pass in "${render_passes[@]}"; do
 			sed -i.tmp 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
 			sed -i.tmp 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"
 			sed -i.tmp 's/\"min_temperature\"[ ]*[0-9\.]*/\"min_temperature\" '${min_temperature}'/g' "$scene_file_tmp"
+			sed -i.tmp 's/\"max_temperature\"[ ]*[0-9\.]*/\"max_temperature\" '${max_temperature}'/g' "$scene_file_tmp"
 			;;
 		*)
 			echo "Error: invalid render config $render_pass"
