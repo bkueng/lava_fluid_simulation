@@ -15,6 +15,7 @@
 #include "simulation.h"
 #include "timer.h"
 #include "memory_pool.h"
+#include "output_file.h"
 #include "Math/Rand.h"
 #include "Math/Warp.h"
 
@@ -415,44 +416,42 @@ void Simulation::writeOutput(int frame) {
 	/* RIB output */
 	sprintf(buffer, "/frame_%06i.rib", frame);
 	string file_name = m_config.output_dir + buffer;
-
-	FILE* file = fopen(file_name.c_str(), "w");
-	if (!file) throw EXCEPTION(EFILE_ERROR);
+	OutputFile file(file_name);
 
 
 	switch (m_config.output_format) {
 	case SimulationConfig::FormatPoint:
 		//positions
-		fprintf(file, "Points \"P\" [ ");
+		file.printf("Points \"P\" [ ");
 		for(const auto& particle : m_particles) {
-			fprintf(file, "%.7lf %.7lf %.7lf ",
+			file.printf("%.7lf %.7lf %.7lf ",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z);
 		}
-		fprintf(file, "]\n \"Cs\" [ ");
+		file.printf("]\n \"Cs\" [ ");
 		switch (m_config.output_color) {
 		case SimulationConfig::ColorDensity:
 			for (const auto& particle : m_particles) {
 				f_color_density(particle);
-				fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+				file.printf("%.3f %.3f %.3f ", r, g, b);
 			}
 			break;
 		case SimulationConfig::ColorTemperature:
 			for (const auto& particle : m_particles) {
 				f_color_temperature(particle);
-				fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+				file.printf("%.3f %.3f %.3f ", r, g, b);
 			}
 			break;
 		case SimulationConfig::ColorSurface:
 			for (const auto& particle : m_particles) {
 				f_color_surface(particle);
-				fprintf(file, "%.3f %.3f %.3f ", r, g, b);
+				file.printf("%.3f %.3f %.3f ", r, g, b);
 			}
 			break;
 		default:
 			break;
 		}
-		fprintf(file, "]\n");
+		file.printf("]\n");
 		break;
 
 	case SimulationConfig::FormatSphere:
@@ -460,7 +459,7 @@ void Simulation::writeOutput(int frame) {
 		float radius = m_config.output_constantwidth / 2.;
 
 		for(const auto& particle : m_particles) {
-			fprintf(file, "AttributeBegin\n");
+			file.printf("AttributeBegin\n");
 			if (m_config.output_format != SimulationConfig::FormatSurface) {
 				switch (m_config.output_color) {
 				case SimulationConfig::ColorDensity:
@@ -475,16 +474,16 @@ void Simulation::writeOutput(int frame) {
 				default:
 					break;
 				}
-				fprintf(file, "Color[%.3f %.3f %.3f]\n", r, g, b);
+				file.printf("Color[%.3f %.3f %.3f]\n", r, g, b);
 			}
 			if (m_config.output_color == SimulationConfig::ColorShader) {
-				fprintf(file, "Translate %.7lf %.7lf %.7lf\n"
+				file.printf("Translate %.7lf %.7lf %.7lf\n"
 					"Sphere %.4f -%.4f %.4f 360\n\"Temp\"[%.4f]\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
 					radius, radius, radius, (float)particle.temperature * temperature_scaling);
 			} else {
-				fprintf(file, "Translate %.7lf %.7lf %.7lf\n"
+				file.printf("Translate %.7lf %.7lf %.7lf\n"
 					"Sphere %.4f -%.4f %.4f 360\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
@@ -499,7 +498,7 @@ void Simulation::writeOutput(int frame) {
 		float radius = m_config.output_constantwidth / 2.;
 
 		for(const auto& particle : m_particles) {
-			fprintf(file, "AttributeBegin\n");
+			file.printf("AttributeBegin\n");
 			if (m_config.output_format != SimulationConfig::FormatSurface) {
 				switch (m_config.output_color) {
 				case SimulationConfig::ColorDensity:
@@ -514,7 +513,7 @@ void Simulation::writeOutput(int frame) {
 				default:
 					break;
 				}
-				fprintf(file, "Color[%.3f %.3f %.3f]\n", r, g, b);
+				file.printf("Color[%.3f %.3f %.3f]\n", r, g, b);
 			}
 			//rotate z axis to -particle.gradient
 			Vec3f zaxis(0, 0, 1), grad(0, 1, 0);
@@ -523,14 +522,14 @@ void Simulation::writeOutput(int frame) {
 			float angle = acos(dot(zaxis, grad))*(180./M_PI);
 			Vec3f rot_dir = cross(zaxis, grad);
 			if (m_config.output_color == SimulationConfig::ColorShader) {
-				fprintf(file, "Translate %.7lf %.7lf %.7lf\nRotate %f %f %f %f\n"
+				file.printf("Translate %.7lf %.7lf %.7lf\nRotate %f %f %f %f\n"
 					"Disk %.4f %.4f 360\n\"Temp\"[%.4f]\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
 					angle, rot_dir.x, rot_dir.y, rot_dir.z, radius/3.f, radius,
 					(float)particle.temperature * temperature_scaling);
 			} else {
-				fprintf(file, "Translate %.7lf %.7lf %.7lf\nRotate %f %f %f %f\n"
+				file.printf("Translate %.7lf %.7lf %.7lf\nRotate %f %f %f %f\n"
 					"Disk %.4f %.4f 360\nAttributeEnd\n",
 					(double)particle.position.x, (double)particle.position.y,
 					(double)particle.position.z,
@@ -540,8 +539,6 @@ void Simulation::writeOutput(int frame) {
 	}
 		break;
 	}
-
-	fclose(file);
 }
 
 void Simulation::addParticlesOnGrid(const Math::Vec3f& min_pos,

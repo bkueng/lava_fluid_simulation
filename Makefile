@@ -23,6 +23,8 @@ APP_NAME := simulator
 LIBTIFF :=     3rdparty/tiff-4.0.3/libtiff/.libs/libtiff.a
 LIBTIFF_INC := 3rdparty/tiff-4.0.3/libtiff
 
+COMPRESSION ?= 0 #compress output files using gzip if set to 1
+
 # Listings of source files for the different executables.
 SOURCES_cpp := $(wildcard src/*.cpp) 3rdparty/pugixml/pugixml.cpp \
 	3rdparty/tinyobjloader/tiny_obj_loader.cpp
@@ -40,6 +42,12 @@ CXXt := 			g++
 LIBS :=				-lm -fopenmp
 INCPATH :=			-Iinclude -I$(LIBTIFF_INC) \
 					-I3rdparty/pugixml -I3rdparty/tinyobjloader
+
+ifeq ($(COMPRESSION), 1)
+LIBS      +=        -lz
+CFLAGS    +=        -DUSE_COMPRESSION
+CXXFLAGS  +=        -DUSE_COMPRESSION
+endif
 
 # whether or not to generate & use include dependency files
 USE_DEP_FILES :=	1
