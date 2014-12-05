@@ -1,0 +1,102 @@
+<config>
+
+	<simulation
+		simulation_time="1"
+		output_rate="9"
+		smoothing_kernel_size="0.0021"
+		lookup_dist="0.0023"
+		num_y_cells="200"
+		pressure_k="1000"
+		rho0="1000"
+		particle_mass="0.000002"
+		ground_method="elastic"
+		ground_spring="3000"
+		gravity="0 -9.81 0"
+		surface_air_threshold="0.4"
+
+		viscosity_coeff_a="0.005456"
+		viscosity_coeff_b="316.96145"
+
+		temperature_diffusion_coeff="90000"
+		temperature_diffusion_coeff_air="0.8"
+		temperature_diffusion_coeff_ground="23000000"
+
+		time_step="0.00005"
+		>
+
+		<heightfield
+			file="data/height_field/alpine-terrain.tif"
+			scaling="0.4">
+			<tiff step_x="1" step_y="1"></tiff>
+		</heightfield>
+
+		<particles_grid
+			min_pos="0.55 0.01 0.5"
+			max_pos="0.65 0.05 0.6"
+			count="80 40 80"
+			velocity="0 -0.3 0"
+			temperature="1000"
+			calc_mass="true"
+			>
+		</particles_grid>
+
+	</simulation>
+
+	<!--
+	<output comment="point rendering with temperature as color"
+		format="point"
+		color="density">
+		<rendering
+			pass0="data/scenes/alpine.rib"
+			constantwidth="0.0017">
+		</rendering>
+	</output>
+	-->
+
+<!--
+	<output comment="disk rendering"
+		format="disk"
+		color="density">
+		<rendering
+			pass0="data/scenes/alpine.rib"
+			constantwidth="0.002">
+		</rendering>
+	</output>
+	-->
+<!--
+	<output comment="surface rendering without glow"
+		format="surface"
+		color="shader">
+		<rendering
+			pass0="data/scenes/alpine_surface_pass0.rib"
+			pass1="blur 0x2.4 normal"
+			pass2="blur 0x0.5 temperature"
+			pass3="data/scenes/alpine_surface_pass2.rib"
+			pass4="temporalblur 1"
+			constantwidth="0.0021"
+			min_temperature="0.75"
+			max_temperature="1.05">
+			<remove_line_from_scene match="surface.tif"></remove_line_from_scene>
+		</rendering>
+	</output>
+-->
+	<output comment="surface rendering with glow"
+		format="surface"
+		color="shader">
+		<rendering
+			pass0="data/scenes/alpine_surface_pass0.rib"
+			pass1="blur 0x2.4 normal"
+			pass2="blur 0x0.15 temperature"
+			pass3="data/scenes/alpine_surface_pass1.rib"
+			pass4="blur 0x8 surface"
+			pass5="temporalblur 3 surface"
+			pass6="data/scenes/alpine_surface_pass2.rib"
+			pass7="temporalblur 1"
+			constantwidth="0.0021"
+			min_temperature="0.75"
+			max_temperature="1.05">
+		</rendering>
+	</output>
+
+
+</config>
