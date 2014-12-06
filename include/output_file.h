@@ -53,6 +53,7 @@ void OutputFile::printf(const char* format, ...) {
    int len = vsprintf(buffer, format, arg);
    va_end(arg);
    if (len < 0) THROW(EFILE_ERROR);
+   DEBUG_ASSERT1(len < buffer_len);
 
 #ifdef USE_COMPRESSION
 	gzwrite(m_file_handle, buffer, len);
