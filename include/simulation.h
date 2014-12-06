@@ -167,10 +167,11 @@ public:
 	 * @param temperature
 	 * @param calc_mass           whether particle mass should be calculated
 	 *                            (from the volume). if false, use the config value
+	 * @param print_avg_density   if true calculate average density & print (may be slow)
 	 */
 	void addParticlesOnGrid(const Math::Vec3f& min_pos, const Math::Vec3f& max_pos,
         const Math::Vec3i& counts, const Math::Vec3f& initial_velocity,
-		dfloat temperature, bool calc_mass);
+		dfloat temperature, bool calc_mass, bool print_avg_density = false);
 private:
 
 	/** add a new particle. Note that this (can) invalidate all existing particle

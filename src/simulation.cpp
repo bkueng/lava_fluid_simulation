@@ -543,12 +543,14 @@ void Simulation::writeOutput(int frame) {
 
 void Simulation::addParticlesOnGrid(const Math::Vec3f& min_pos,
 		const Math::Vec3f& max_pos, const Math::Vec3i& counts,
-		const Math::Vec3f& initial_velocity, dfloat temperature, bool calc_mass) {
+		const Math::Vec3f& initial_velocity, dfloat temperature, bool calc_mass,
+		bool print_avg_density) {
 	dfloat x_min = min_pos.x, x_max = max_pos.x;
 	dfloat y_min = min_pos.y, y_max = max_pos.y;
 	dfloat z_min = min_pos.z, z_max = max_pos.z;
 	dfloat dx=0, dy=0, dz=0;
 	Vec3f p;
+	int num_particles_before = (int)m_particles.size();
 	for (dfloat z = z_min; z <= z_max; z+=dz=(z_max - z_min) / counts.z) {
 		for (dfloat x = x_min; x <= x_max; x+=dx=(x_max - x_min) / counts.x) {
 			for (dfloat y = y_min; y <= y_max; y+=dy=(y_max - y_min) / counts.y) {
@@ -559,9 +561,27 @@ void Simulation::addParticlesOnGrid(const Math::Vec3f& min_pos,
 			}
 		}
 	}
+	int num_particles_added = (int)m_particles.size()-num_particles_before;
 	if(calc_mass) {
 		m_config.particle_mass = dx * dy * dz * m_config.rho0;
 	}
+
+	if (print_avg_density) {
+		dfloat avg_density = 0;
+		for(int particle_idx = num_particles_before; particle_idx < (int)m_particles.size();
+				++particle_idx) {
+			Particle& particle = m_particles[particle_idx];
+			dfloat kernel_sum = 0;
+			for (int i = 0; i < (int)m_particles.size(); ++i) {
+				kernel_sum += m_kernel.eval(particle.position, m_particles[i].position);
+			}
+			avg_density += m_kernel.kernelWeight() * m_config.particle_mass * kernel_sum;
+		}
+		avg_density /= num_particles_added;
+		printf("Added %i grid particles with average density %.3f\n",
+				num_particles_added, avg_density);
+	}
+
 	if (temperature > m_max_temperature) m_max_temperature = temperature;
 }
 

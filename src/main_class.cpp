@@ -78,6 +78,7 @@ void CMain::parseCommandLine(int argc, char* argv[])
 	m_parameters->addParam("generate-rib-heightfield", 'g');
 
 	m_parameters->addParam("frames", 'f');
+	m_parameters->addSwitch("print-density", ' ');
 	
 	
 	m_cl_parse_result = m_parameters->parse();
@@ -103,6 +104,8 @@ void CMain::printHelp()
 		   "\n"
 		   " options\n"
 		   "  -f, --frames <num_frames>       limit number of simulated frames\n"
+		   "  --print-density                 before starting simulation, print average density\n"
+		   "                                  of grid particles (this can be slow). useful to find rho0\n"
 		   "\n"
 		   "  -v, --verbose                   print debug messages\n"
 		   "                                  (same as --log debug)\n"
@@ -239,6 +242,8 @@ void CMain::processArgs()
 		fclose(file);
 	}
 
+	bool print_density = m_parameters->getSwitch("print-density");
+
 	if(do_simulate || m_parameters->getSwitch("simulate")) {
 		LOG(DEBUG, "do simulation");
 		SimulationConfig config;
@@ -367,7 +372,7 @@ void CMain::processArgs()
 			dfloat temperature = (dfloat)particles_grid.attribute("temperature").as_double(100);
 			bool calc_mass = particles_grid.attribute("calc_mass").as_bool(false);
 			simulation->addParticlesOnGrid(min_pos, max_pos, counts, velocity,
-					temperature, calc_mass);
+					temperature, calc_mass, print_density);
 		}
 
 		simulation->run();
