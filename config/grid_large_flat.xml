@@ -5,7 +5,6 @@
 		output_rate="1"
 		smoothing_kernel_size="0.005"
 		num_y_cells="100"
-		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.0072"
 		ground_method="elastic"

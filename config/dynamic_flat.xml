@@ -6,7 +6,6 @@
 		smoothing_kernel_size="0.008"
 		lookup_dist="0.0085"
 		num_y_cells="100"
-		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.000012"
 		ground_method="elastic"

@@ -6,7 +6,6 @@
 		smoothing_kernel_size="0.0021"
 		lookup_dist="0.0023"
 		num_y_cells="200"
-		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.000002"
 		ground_method="elastic"
@@ -45,7 +44,7 @@
 	<!--
 	<output comment="point rendering with temperature as color"
 		format="point"
-		color="density">
+		color="pressure">
 		<rendering
 			pass0="data/scenes/alpine.rib"
 			constantwidth="0.0017">
@@ -56,7 +55,7 @@
 <!--
 	<output comment="disk rendering"
 		format="disk"
-		color="density">
+		color="pressure">
 		<rendering
 			pass0="data/scenes/alpine.rib"
 			constantwidth="0.002">
