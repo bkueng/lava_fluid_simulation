@@ -260,7 +260,6 @@ void CMain::processArgs()
 			THROW_s(EINVALID_PARAMETER, "Config Error: lookup_dist < smoothing_kernel_size");
 		config.cell_size = (dfloat)sim_node.attribute("cell_size").as_double(config.neighbor_lookup_dist);
 		config.num_y_cells = sim_node.attribute("num_y_cells").as_int(20);
-		config.k = (dfloat)sim_node.attribute("pressure_k").as_double(1000);
 		config.rho0 = (dfloat)sim_node.attribute("rho0").as_double(1000);
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
 		config.viscosity_coeff_a = (dfloat)sim_node.attribute("viscosity_coeff_a").as_double(0.002);
@@ -292,6 +291,10 @@ void CMain::processArgs()
 			LOG(ERROR, "unknown ground_method (valid are: 'elastic', 'spring')");
 			return;
 		}
+		config.density_error_threshold = (dfloat)sim_node.attribute(
+				"density_error_threshold").as_double(0.01);
+		config.min_density_iterations = sim_node.attribute("min_density_iterations").as_int(3);
+		config.max_density_iterations = sim_node.attribute("max_density_iterations").as_int(200);
 
 		//erruptions
 		xml_node erruptions_node = sim_node.child("erruptions");
@@ -340,9 +343,9 @@ void CMain::processArgs()
 		} else {
 			THROW_s(EINVALID_PARAMETER, "Error: unknown output format '%s'\n", output_format.c_str());
 		}
-		string output_color = output_node.attribute("color").as_string("density");
-		if (output_color == "density") {
-			config.output_color = SimulationConfig::ColorDensity;
+		string output_color = output_node.attribute("color").as_string("pressure");
+		if (output_color == "pressure") {
+			config.output_color = SimulationConfig::ColorPressure;
 		} else if(output_color == "temperature") {
 			config.output_color = SimulationConfig::ColorTemperature;
 		} else if(output_color == "surface") {

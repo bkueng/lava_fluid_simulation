@@ -26,8 +26,14 @@ struct Particle {
 	dfloat temperature;
 	dfloat dtemperature; /** temperature update */
 
-	dfloat density;
 	Math::Vec3f forces; /** sum of all forces */
+
+	/* PCISPH pressure loop */
+	dfloat predicted_density;
+	Math::Vec3f predicted_velocity;
+	Math::Vec3f predicted_position;
+	Math::Vec3f force_pressure;
+	dfloat pressure;
 
 	Math::Vec3f density_gradient;
 

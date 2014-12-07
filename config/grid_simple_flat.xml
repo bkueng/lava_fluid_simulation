@@ -1,11 +1,10 @@
 <config>
 
 	<simulation
-		simulation_time="1"
+		simulation_time="3"
 		output_rate="1"
 		smoothing_kernel_size="0.03"
 		num_y_cells="65"
-		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.0072"
 		ground_method="elastic"
@@ -13,6 +12,8 @@
 		gravity="0 -9.81 0"
 		time_step="0.003"
 		surface_air_threshold="0.25"
+
+		min_density_iterations="1"
 		>
 
 		<heightfield
@@ -34,7 +35,7 @@
 
 	<output
 		format="point"
-		color="density">
+		color="pressure">
 		<rendering
 			pass0="data/scenes/flat.rib"
 			constantwidth="0.006">

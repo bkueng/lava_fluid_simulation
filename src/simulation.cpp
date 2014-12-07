@@ -42,6 +42,24 @@ Simulation::Simulation(HeightField& height_field, const SimulationConfig& config
 Simulation::~Simulation() {
 	if (m_grid) delete (m_grid);
 }
+void Simulation::checkGridBoundary(Math::Vec3f& position, Math::Vec3f& velocity)
+ const {
+	//grid boundaries: assume perfect elastic (should not occur anyway)
+	if(position.x < Math::FEQ_EPS) {
+		position.x = Math::FEQ_EPS;
+		velocity.x = -velocity.x;
+	} else if(position.x > m_height_field.fieldWidth()-Math::FEQ_EPS) {
+		position.x = m_height_field.fieldWidth()-Math::FEQ_EPS;
+		velocity.x = -velocity.x;
+	}
+	if(position.z < Math::FEQ_EPS) {
+		position.z = Math::FEQ_EPS;
+		velocity.z = -velocity.z;
+	} else if(position.z > m_height_field.fieldDepth()-Math::FEQ_EPS) {
+		position.z = m_height_field.fieldDepth()-Math::FEQ_EPS;
+		velocity.z = -velocity.z;
+	}
+}
 
 void Simulation::run() {
 
@@ -49,7 +67,8 @@ void Simulation::run() {
 
 	/* global particle attributes */
 	dfloat particle_mass = m_config.particle_mass;
-	m_particle_radius = pow(particle_mass / m_config.rho0 * 3./4./M_PI, 1./3.);
+	dfloat rho0 = m_config.rho0;
+	m_particle_radius = pow(particle_mass / rho0 * 3./4./M_PI, 1./3.);
 
 	printf("Particle mass: %f, radius: %f, max temperature: %.1f\n",
 			particle_mass, m_particle_radius, m_max_temperature);
@@ -59,6 +78,7 @@ void Simulation::run() {
 	int num_timesteps_statistics = 0;
 	int num_neighbor_updates_statistics = 1;
 	int num_timesteps_total = 0;
+	int num_density_iters_statistics = 0;
 	int64_t start_time = getTickCount();
 	dfloat max_velocity_dt = 0; /* max position change of a particle */
 	dfloat smoothing_kernel_size2 = m_config.smoothing_kernel_size
@@ -70,9 +90,14 @@ void Simulation::run() {
 	MemoryPool<Particle*> memory_pool(min_neighbors_array_size);
 	bool simulation_running = true;
 	long global_num_neighbors = 0; /** total number of neighbors including all threads */
+	int global_max_num_neighbors = 0, global_max_num_neighbors_idx = 0;
 	const int chunk_size = 1000; /** amount of particles to iterate per chunk for each thread */
 
 	dfloat dt = m_config.time_step;
+	dfloat beta = dt*dt * particle_mass*particle_mass * 2. / (rho0*rho0); /* PCISPH update factor */
+	dfloat delta = 1.;
+	int num_prediction_correction_iters = 0;
+	dfloat max_density_error = 0;
 
 	m_grid->updateEntries(m_particles);
 
@@ -82,7 +107,8 @@ void Simulation::run() {
 		memory_pool.reset();
 
 		/* neighbor search */
-		long local_total_neighbors=0;
+		long local_total_neighbors = 0;
+		int local_max_num_neighbors = 0, local_max_num_neighbors_idx = 0;
 		if (need_neighbors_update) {
 #pragma omp for schedule(dynamic, chunk_size)
 			for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
@@ -101,23 +127,20 @@ void Simulation::run() {
 
 				memory_pool.setNumUsedElements(num_neighbors);
 				particle.num_neighbors = num_neighbors;
+				if (num_neighbors > local_max_num_neighbors) {
+					local_max_num_neighbors = num_neighbors;
+					local_max_num_neighbors_idx = particle_idx;
+				}
 				local_total_neighbors += num_neighbors_statistics;
 			}
-#pragma omp atomic
-			global_num_neighbors += local_total_neighbors;
-		}
-
-
-
-		/* density update */
-#pragma omp for schedule(dynamic, chunk_size)
-		for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
-			Particle& particle = m_particles[particle_idx];
-			dfloat kernel_sum = 0;
-			for (int i = 0; i < particle.num_neighbors; ++i) {
-				kernel_sum += m_kernel.eval(particle.position, particle.neighbors[i]->position);
+#pragma omp critical
+			{
+				global_num_neighbors += local_total_neighbors;
+				if (local_max_num_neighbors > global_max_num_neighbors) {
+					global_max_num_neighbors = local_max_num_neighbors;
+					global_max_num_neighbors_idx = local_max_num_neighbors_idx;
+				}
 			}
-			particle.density = m_kernel.kernelWeight() * particle_mass * kernel_sum;
 		}
 
 
@@ -126,9 +149,7 @@ void Simulation::run() {
 #pragma omp for schedule(dynamic, chunk_size)
 		for(int particle_idx = 0; particle_idx < (int)m_particles.size(); ++particle_idx) {
 			Particle& particle = m_particles[particle_idx];
-			dfloat particle_pressure = pressure(particle);
 
-			Vec3f force_pressure(0.);
 			Vec3f force_viscosity(0.);
 			Vec3f mass_density_gradient(0.); /* direction of highest neighbor mass */
 			dfloat dtemperature = 0.;
@@ -137,16 +158,14 @@ void Simulation::run() {
 
 				Vec3f gradient = m_kernel_pressure.evalGrad(
 						particle.position, neighbor_part->position);
-				force_pressure += ((particle_pressure + pressure(*neighbor_part)) /
-					neighbor_part->density) * gradient;
 
 				dfloat laplacian_weight = m_kernel_viscosity.evalLaplace(
 						particle.position, neighbor_part->position);
 				force_viscosity += (neighbor_part->velocity - particle.velocity) *
-					(laplacian_weight / neighbor_part->density);
+					(laplacian_weight / rho0);
 
 				dtemperature += (neighbor_part->temperature - particle.temperature) *
-						(laplacian_weight / neighbor_part->density);
+						(laplacian_weight / rho0);
 				mass_density_gradient += gradient;
 			}
 			mass_density_gradient *= particle_mass * m_kernel_pressure.kernelWeightGrad();
@@ -166,15 +185,107 @@ void Simulation::run() {
 			particle.changeFlag(Particle::FLAG_IS_AT_AIR,
 				(dfloat)num_neighbors_half_space / num_neighbors < m_config.surface_air_threshold);
 
-			force_pressure *= -0.5 * particle_mass * m_kernel_pressure.kernelWeightGrad();
 			force_viscosity *= viscosity(particle) * particle_mass *
 					m_kernel_viscosity.kernelWeightLaplace();
 
-			Vec3f force_gravity = particle.density*m_config.g;
+			Vec3f force_gravity = rho0*m_config.g;
 
-			particle.forces = force_pressure + force_viscosity + force_gravity;
+			particle.forces = force_viscosity + force_gravity;
 			particle.dtemperature = dtemperature;
+
+			particle.pressure = 0;
+			particle.force_pressure = 0;
 		}
+
+
+		/* prediction-correction iteration */
+		while ((max_density_error >= rho0*m_config.density_error_threshold
+				|| num_prediction_correction_iters < m_config.min_density_iterations)
+				&& num_prediction_correction_iters < m_config.max_density_iterations) {
+
+			dfloat local_max_density_error = 0;
+
+			/* predict velocity & position */
+#pragma omp for schedule(dynamic, chunk_size)
+			for(int particle_idx = 0; particle_idx < (int)m_particles.size();
+					++particle_idx) {
+				Particle& particle = m_particles[particle_idx];
+				Vec3f& pos = particle.predicted_position;
+				//FIXME: spring ground force is not handled here
+
+				particle.predicted_velocity = particle.velocity +
+						dt * (particle.forces+particle.force_pressure)/rho0;
+				particle.predicted_position = particle.position +
+						dt * particle.predicted_velocity;
+
+				checkGridBoundary(particle.predicted_position, particle.predicted_velocity);
+
+				//ground contact: elastic
+				if(m_config.ground_method == SimulationConfig::GroundElastic) {
+					dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
+					if(pos.y < height_field_val) {
+						Vec3f n;
+						m_height_field.normal(pos.x, pos.z, n);
+						pos.y = height_field_val + Math::FEQ_EPS;
+						//no need to update velocity
+					}
+				}
+			}
+
+#pragma omp atomic
+			//reset, in between 2 barriers to make sure all threads see this consistently
+			max_density_error *= 0.;
+
+
+			/* predict density & update pressure */
+#pragma omp for schedule(dynamic, chunk_size)
+			for(int particle_idx = 0; particle_idx < (int)m_particles.size();
+					++particle_idx) {
+				Particle& particle = m_particles[particle_idx];
+				//Note: here we use the 'old' neighborhood, which could be inaccurate.
+				dfloat predicted_density = 0;
+				for (int i = 0; i < particle.num_neighbors; ++i) {
+					Particle* neighbor_part = particle.neighbors[i];
+					predicted_density += m_kernel.eval(particle.predicted_position,
+							neighbor_part->predicted_position);
+				}
+				predicted_density *= m_kernel.kernelWeight() * particle_mass;
+				dfloat density_err = predicted_density - rho0;
+				particle.pressure += delta * density_err;
+				if (particle.pressure < 0.) particle.pressure = 0.;
+
+				if (density_err > local_max_density_error)
+					local_max_density_error = density_err;
+			}
+
+			/* compute pressure force at current time */
+#pragma omp for schedule(dynamic, chunk_size) nowait
+			for(int particle_idx = 0; particle_idx < (int)m_particles.size();
+					++particle_idx) {
+				Particle& particle = m_particles[particle_idx];
+
+				Vec3f force_pressure(0.);
+				for (int i = 0; i < particle.num_neighbors; ++i) {
+					Particle* neighbor_part = particle.neighbors[i];
+					Vec3f gradient = m_kernel_pressure.evalGrad(
+							particle.position, neighbor_part->position);
+					force_pressure += (particle.pressure + neighbor_part->pressure) * gradient;
+				}
+				particle.force_pressure = force_pressure *
+						(-0.5*particle_mass / rho0 * m_kernel_pressure.kernelWeightGrad());
+			}
+
+			//reduce max_density_error
+#pragma omp critical
+			{
+				if (local_max_density_error > max_density_error)
+					max_density_error = local_max_density_error;
+			}
+#pragma omp single
+			++num_prediction_correction_iters;
+#pragma omp flush(max_density_error, num_prediction_correction_iters)
+		}
+
 
 
 		/* update positions, velocities & handle collisions */
@@ -201,28 +312,15 @@ void Simulation::run() {
 					* m_config.temperature_diffusion_coeff;
 
 			//symplectic euler
-			particle.velocity += dt * particle.forces / particle.density;
+			particle.velocity += dt * (particle.forces+particle.force_pressure)/rho0;
 			particle.position += dt * particle.velocity;
 
 			dfloat velocity2 = particle.velocity.length2();
 			if(velocity2 > local_max_velocity2) local_max_velocity2 = velocity2;
 
 
-			//grid boundaries: assume perfect elastic (should not occur anyway)
-			if(pos.x < Math::FEQ_EPS) {
-				pos.x = Math::FEQ_EPS;
-				particle.velocity.x = -particle.velocity.x;
-			} else if(pos.x > m_height_field.fieldWidth()-Math::FEQ_EPS) {
-				pos.x = m_height_field.fieldWidth()-Math::FEQ_EPS;
-				particle.velocity.x = -particle.velocity.x;
-			}
-			if(pos.z < Math::FEQ_EPS) {
-				pos.z = Math::FEQ_EPS;
-				particle.velocity.z = -particle.velocity.z;
-			} else if(pos.z > m_height_field.fieldDepth()-Math::FEQ_EPS) {
-				pos.z = m_height_field.fieldDepth()-Math::FEQ_EPS;
-				particle.velocity.z = -particle.velocity.z;
-			}
+			checkGridBoundary(pos, particle.velocity);
+
 
 			//ground contact: elastic
 			if(m_config.ground_method == SimulationConfig::GroundElastic) {
@@ -244,11 +342,11 @@ void Simulation::run() {
 			// but simply testing for ground & air flag is not enough, because
 			// usually ground particles also have the air flag set.
 			if (particle.isOnGround()) {
-				dfloat r2_over_rho = m_particle_radius*m_particle_radius / particle.density;
+				dfloat r2_over_rho = m_particle_radius*m_particle_radius / rho0;
 				particle.temperature += (m_config.temperature_ground - particle.temperature)
 						* r2_over_rho * dt * m_config.temperature_diffusion_coeff_ground;
 			} else if (particle.isAtAir()) {
-				dfloat r2_over_rho = m_particle_radius*m_particle_radius / particle.density;
+				dfloat r2_over_rho = m_particle_radius*m_particle_radius / rho0;
 				particle.temperature += (pow(m_config.temperature_air, 4) - pow(particle.temperature, 4))
 						* r2_over_rho * dt * m_config.temperature_diffusion_coeff_air;
 			}
@@ -276,6 +374,32 @@ void Simulation::run() {
 		//serial part: only one thread should update this. the others will wait
 #pragma omp single
 		{
+			num_density_iters_statistics += num_prediction_correction_iters;
+			num_prediction_correction_iters = 0; //reset for next iteration...
+
+			/* calculate delta for PCISPH */
+			global_max_num_neighbors = 0;
+			dfloat grad_dot_sum = 0;
+			Vec3f grad_sum(0);
+			if (m_particles.size() > 0) {
+				Particle& max_particle = m_particles[global_max_num_neighbors_idx];
+				for (int i = 0; i < max_particle.num_neighbors; ++i) {
+					Particle* neighbor_part = max_particle.neighbors[i];
+					Vec3f gradient = m_kernel_pressure.evalGrad(
+							max_particle.position, neighbor_part->position);
+					grad_sum += gradient;
+					grad_dot_sum += dot(gradient, gradient);
+				}
+			}
+			grad_sum *= m_kernel_pressure.kernelWeight();
+			grad_dot_sum *= m_kernel_pressure.kernelWeight() * m_kernel_pressure.kernelWeight();
+			delta = 1./(beta * (dot(grad_sum, grad_sum) + grad_dot_sum));
+			if (grad_dot_sum < Math::FEQ_EPS2) delta = 1;
+			//this seems to be needed to make it converge at all. not sure if
+			//something else is wrong...
+			delta /= 5.;
+
+
 			simulation_time += dt;
 			++num_timesteps_statistics;
 			++num_timesteps_total;
@@ -296,17 +420,19 @@ void Simulation::run() {
 				int avg_neighbors = 0;
 				if (m_particles.size() > 0)
 					avg_neighbors = (int) (global_num_neighbors / m_particles.size());
-				printf("#ele:%6i, T:%7.3f / %.3f, steps:%5.1f/s (%3.0fms/step), avg_nei:%3i, nei_upd:%2i%% temp:[%.0f %.0f]\n",
+				printf("#P:%6i, T:%7.3f/%.3f, steps:%5.1f/s (%3.0fms), avg_nei:%3i,"
+						" nei_upd:%2i%% temp:[%.0f %.0f] avg_it:%2i\n",
 						(int)m_particles.size(), (float)simulation_time,
 						(float)m_config.simulation_time,
 						(float)num_timesteps_statistics / elapsed_time,
 						(float)elapsed_time/num_timesteps_statistics*1000.f,
 						avg_neighbors,
 						100*num_neighbor_updates_statistics/num_timesteps_statistics,
-						min_temp, max_temp);
+						min_temp, max_temp, num_density_iters_statistics / num_timesteps_statistics);
 				start_time = cur_time;
 				num_timesteps_statistics = 0;
 				num_neighbor_updates_statistics = 0;
+				num_density_iters_statistics = 0;
 			}
 
 			//is neighbor update needed?
@@ -325,8 +451,6 @@ void Simulation::run() {
 				cur_neighbors_dist = m_config.neighbor_lookup_dist;
 				++num_neighbor_updates_statistics;
 			}
-
-			//TODO: change timestep adaptively?
 
 		}
 #pragma omp flush(need_neighbors_update)
@@ -371,26 +495,26 @@ void Simulation::initOutput() {
 
 void Simulation::writeOutput(int frame) {
 	dfloat temperature_scaling = 1./m_max_temperature;
-	dfloat max_density = -1e12, min_density = 1e12, density_span = 1;
+	dfloat max_pressure = -1e12, min_pressure = 1e12, pressure_span = 1;
 	float r = 0, g = 0, b = 0;
 	/* init color */
 	switch (m_config.output_color) {
-	case SimulationConfig::ColorDensity:
+	case SimulationConfig::ColorPressure:
 		for (const auto& particle : m_particles) {
-			if (particle.density > max_density) max_density = particle.density;
-			if (particle.density < min_density) min_density = particle.density;
+			if (particle.pressure > max_pressure) max_pressure = particle.pressure;
+			if (particle.pressure < min_pressure) min_pressure = particle.pressure;
 		}
-		density_span = max_density - min_density;
-		if (density_span < Math::FEQ_EPS)
-			density_span = 1;
+		pressure_span = max_pressure - min_pressure;
+		if (pressure_span < Math::FEQ_EPS)
+			pressure_span = 1;
 		break;
 	default:
 		break;
 	}
 
-	auto f_color_density = [&](const Particle& particle) {
+	auto f_color_pressure = [&](const Particle& particle) {
 		r = 1;
-		g = (particle.density - min_density) / density_span;
+		g = (particle.pressure - min_pressure) / pressure_span;
 		b = 0;
 	};
 	auto f_color_temperature = [&](const Particle& particle) {
@@ -430,9 +554,9 @@ void Simulation::writeOutput(int frame) {
 		}
 		file.printf("]\n \"Cs\" [ ");
 		switch (m_config.output_color) {
-		case SimulationConfig::ColorDensity:
+		case SimulationConfig::ColorPressure:
 			for (const auto& particle : m_particles) {
-				f_color_density(particle);
+				f_color_pressure(particle);
 				file.printf("%.3f %.3f %.3f ", r, g, b);
 			}
 			break;
@@ -462,8 +586,8 @@ void Simulation::writeOutput(int frame) {
 			file.printf("AttributeBegin\n");
 			if (m_config.output_format != SimulationConfig::FormatSurface) {
 				switch (m_config.output_color) {
-				case SimulationConfig::ColorDensity:
-					f_color_density(particle);
+				case SimulationConfig::ColorPressure:
+					f_color_pressure(particle);
 					break;
 				case SimulationConfig::ColorTemperature:
 					f_color_temperature(particle);
@@ -501,8 +625,8 @@ void Simulation::writeOutput(int frame) {
 			file.printf("AttributeBegin\n");
 			if (m_config.output_format != SimulationConfig::FormatSurface) {
 				switch (m_config.output_color) {
-				case SimulationConfig::ColorDensity:
-					f_color_density(particle);
+				case SimulationConfig::ColorPressure:
+					f_color_pressure(particle);
 					break;
 				case SimulationConfig::ColorTemperature:
 					f_color_temperature(particle);
@@ -616,16 +740,8 @@ bool Simulation::handleErruptions(dfloat simulation_time, dfloat dt, bool try_to
 				active->particles_left = num_particles - (dfloat)inum_particles;
 				for (int i = 0; i < inum_particles; ++i) {
 					dfloat u = m_rand.nextf(), v = m_rand.nextf();
-					Vec3f position, velocity;
-					position = active->source->getPosition(m_height_field, u, v);
-					velocity = active->init_velocity;
-					if (m_config.init_velocity_perturb_angle > 0.) {
-						dfloat angle = m_rand.nextf()
-								* m_config.init_velocity_perturb_angle * (M_PI / 180.);
-						Vec3f dir;
-						Warp::uniformSphere(&dir, m_rand.nextf(), m_rand.nextf());
-						velocity.rotate(angle, dir);
-					}
+					Vec3f position = active->source->getPosition(m_height_field, u, v);
+					Vec3f velocity = getInitVelocity(*active);
 					addParticle(position, velocity, active->init_temperature);
 				}
 				changed_particles = true;
@@ -637,6 +753,17 @@ bool Simulation::handleErruptions(dfloat simulation_time, dfloat dt, bool try_to
 	else m_deferred_erruption_steps = 0;
 
 	return changed_particles;
+}
+Math::Vec3f Simulation::getInitVelocity(const ErruptionConfig& config) {
+	Vec3f velocity = config.init_velocity;
+	if (m_config.init_velocity_perturb_angle > 0.) {
+		dfloat angle = m_rand.nextf() * m_config.init_velocity_perturb_angle
+				* (M_PI / 180.);
+		Vec3f dir;
+		Warp::uniformSphere(&dir, m_rand.nextf(), m_rand.nextf());
+		velocity.rotate(angle, dir);
+	}
+	return velocity;
 }
 
 Math::Vec3f ErruptionSourceLineSegment::getPosition(

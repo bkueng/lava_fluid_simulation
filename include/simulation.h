@@ -88,7 +88,6 @@ struct SimulationConfig {
 	int num_y_cells = 65; /** number of cells in y direction: increase this for smaller cell_size! */
 
 	//pressure constants
-	dfloat k = 1000; /** stiffness parameter: higher stiffness needs smaller timesteps */
 	dfloat rho0 = 1000; /** rest density of a particle */
 
 	dfloat viscosity_coeff_a = 0.002;
@@ -128,14 +127,14 @@ struct SimulationConfig {
 	std::string output_dir; /** output directory without ending '/' */
 	int output_rate = 1; /** write output data every x timestep */
 	enum OutputColor {
-		ColorDensity = 0,  /** "density" */
+		ColorPressure = 0,  /** "pressure" */
 		ColorTemperature,  /** "temperature" (lowest=blue, middle=green, highest=red) */
 		ColorSurface,      /** "surface" indicate whether particles are on
 							   ground and/or on surface */
 		ColorShader        /** "shader" additional normalized temperature array
 		                       for shader. only with FormatSurface */
 	};
-	OutputColor output_color = ColorDensity;
+	OutputColor output_color = ColorPressure;
 	enum OutputFormat {
 		FormatPoint = 0, /** "point". render flat points */
 		FormatSphere,    /** "sphere". render spheres */
@@ -144,6 +143,12 @@ struct SimulationConfig {
 	};
 	OutputFormat output_format = FormatPoint;
 	float output_constantwidth = 0.003; /** output sphere width/point width */
+
+	/* PCISPH */
+	dfloat density_error_threshold = 0.01; /** acceptable error threshold for
+								density update iterations */
+	int min_density_iterations = 3; /** minimum number of density update iterations */
+	int max_density_iterations = 200; /** maximum number of density update iterations */
 };
 
 /**
@@ -180,14 +185,15 @@ private:
 	inline void addParticle(const Math::Vec3f& position, const Math::Vec3f& velocity,
 			dfloat temperature);
 
-	inline dfloat pressure(const Particle& particle) const {
-		return std::max((dfloat)0., m_config.k * (particle.density - m_config.rho0));
-	}
-
 	inline dfloat viscosity(const Particle& particle) const {
 		return m_config.viscosity_coeff_b *
 				exp(-m_config.viscosity_coeff_a * particle.temperature);
 	}
+
+	/** check whether a position is within the grid and adjust position &
+	 * velocity if it's outside.
+	 */
+	inline void checkGridBoundary(Math::Vec3f& position, Math::Vec3f& velocity) const;
 
 	/**
 	 * @param try_to_defer     try not to add any particles in this step, but
@@ -196,6 +202,8 @@ private:
 	 * @return true if particle array was changed (ie particles added/removed)
 	 */
 	bool handleErruptions(dfloat simulation_time, dfloat dt, bool try_to_defer);
+
+	Math::Vec3f getInitVelocity(const ErruptionConfig& config);
 
 
 	void initOutput();

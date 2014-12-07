@@ -140,6 +140,7 @@ done
 point_width="$(getxmlattr "$config_file" "/config/output/rendering/@constantwidth")"
 format="$(getxmlattr "$config_file" "/config/output/@format")"
 height_field_file="$(getxmlattr "$config_file" "/config/simulation/heightfield/@file")"
+height_field_texture="$(getxmlattr "$config_file" "/config/simulation/heightfield/@texture")"
 height_scaling="$(getxmlattr "$config_file" "/config/simulation/heightfield/@scaling")"
 [ "$height_scaling" = "" ] && height_scaling=1
 height_scaling_larger=`echo "$height_scaling+0.1" | bc`
@@ -185,6 +186,13 @@ for render_pass in "${render_passes[@]}"; do
 			else
 				# delete the line
 				sed -i.tmp '/\"constantwidth\"[ ]* \[[ ]* [0-9\.]*/d' "$scene_file_tmp"
+			fi
+			if [ "$height_field_texture" == "" ]; then
+				# delete the line
+				sed -i.tmp '/HEIGHT_FIELD_TEXTURE/d' "$scene_file_tmp"
+			else
+				height_field_texture_esc="$(echo "$height_field_texture" | sed -e 's/[\/&]/\\&/g')"
+				sed -i.tmp "s/HEIGHT_FIELD_TEXTURE/${height_field_texture_esc}/g" "$scene_file_tmp"
 			fi
 			sed -i.tmp 's/amplitude\"[ ]* \[[ ]* [0-9\.-]*/amplitude\" [ -'${height_scaling}'/g' "$scene_file_tmp"
 			sed -i.tmp 's/sphere\"[ ]* \[[ ]* [0-9\.-]*/sphere\" [ '${height_scaling_larger}'/g' "$scene_file_tmp"

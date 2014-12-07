@@ -2,15 +2,13 @@
 
 	<simulation
 		simulation_time="1"
-		output_rate="3"
+		output_rate="2"
 		smoothing_kernel_size="0.005"
 		lookup_dist="0.00545"
 		num_y_cells="200"
-		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.000012"
 		ground_method="elastic"
-		ground_spring="3000"
 		gravity="0 -9.81 0"
 		surface_air_threshold="0.4"
 
@@ -21,13 +19,12 @@
 		temperature_diffusion_coeff_air="0.5"
 		temperature_diffusion_coeff_ground="19000000"
 
-		time_step="0.0001"
+		time_step="0.00025"
 		>
-		<!-- Note: this small timestep is needed to avoid instabilities.
-			 0.0002 already produces small instabilities -->
 
 		<heightfield
 			file="data/height_field/alpine-terrain.tif"
+			texture="data/height_field/alpine-terrain.tif"
 			scaling="0.4">
 			<tiff step_x="1" step_y="1"></tiff>
 		</heightfield>
@@ -38,7 +35,6 @@
 			count="40 20 40"
 			velocity="0 -0.3 0"
 			temperature="1000"
-			calc_mass="true"
 			>
 		</particles_grid>
 

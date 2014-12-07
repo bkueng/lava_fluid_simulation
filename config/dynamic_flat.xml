@@ -6,7 +6,6 @@
 		smoothing_kernel_size="0.008"
 		lookup_dist="0.0085"
 		num_y_cells="100"
-		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.000012"
 		ground_method="elastic"
@@ -17,6 +16,8 @@
 		init_velocity_perturb_angle="10"
 		viscosity_coeff_a="0.002"
 		viscosity_coeff_b="2"
+
+		min_density_iterations="1"
 
 		temperature_diffusion_coeff="90000"
 		temperature_diffusion_coeff_air="0.2"
