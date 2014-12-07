@@ -10,8 +10,10 @@
 		ground_method="elastic"
 		ground_spring="3000"
 		gravity="0 -9.81 0"
-		time_step="0.0001"
+		time_step="0.0003"
 		surface_air_threshold="0.25"
+
+		min_density_iterations="1"
 		>
 
 		<heightfield

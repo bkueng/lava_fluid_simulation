@@ -17,6 +17,8 @@
 		viscosity_coeff_a="0.002"
 		viscosity_coeff_b="2"
 
+		min_density_iterations="1"
+
 		temperature_diffusion_coeff="90000"
 		temperature_diffusion_coeff_air="0.2"
 		temperature_diffusion_coeff_ground="9000000"

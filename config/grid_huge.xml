@@ -2,7 +2,7 @@
 
 	<simulation
 		simulation_time="1"
-		output_rate="9"
+		output_rate="4"
 		smoothing_kernel_size="0.0021"
 		lookup_dist="0.0023"
 		num_y_cells="200"
@@ -20,7 +20,7 @@
 		temperature_diffusion_coeff_air="0.8"
 		temperature_diffusion_coeff_ground="23000000"
 
-		time_step="0.00005"
+		time_step="0.0001"
 		>
 
 		<heightfield
@@ -44,7 +44,7 @@
 	<!--
 	<output comment="point rendering with temperature as color"
 		format="point"
-		color="pressure">
+		color="temperature">
 		<rendering
 			pass0="data/scenes/alpine.rib"
 			constantwidth="0.0017">
