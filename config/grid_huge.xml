@@ -25,6 +25,7 @@
 
 		<heightfield
 			file="data/height_field/alpine-terrain.tif"
+			texture="data/height_field/alpine-terrain.tif"
 			scaling="0.4">
 			<tiff step_x="1" step_y="1"></tiff>
 		</heightfield>
