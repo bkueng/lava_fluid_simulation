@@ -331,6 +331,7 @@ void CMain::processArgs()
 		createDirectory(config.output_dir);
 		xml_node rendering_node = output_node.child("rendering");
 		config.output_constantwidth = rendering_node.attribute("constantwidth").as_float(0.003);
+		config.min_neighborhood_size = output_node.attribute("min_neighborhood_size").as_int(1);
 		string output_format = output_node.attribute("format").as_string("point");
 		if (output_format == "point") {
 			config.output_format = SimulationConfig::FormatPoint;

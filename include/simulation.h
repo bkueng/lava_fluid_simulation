@@ -143,6 +143,8 @@ struct SimulationConfig {
 	};
 	OutputFormat output_format = FormatPoint;
 	float output_constantwidth = 0.003; /** output sphere width/point width */
+	int min_neighborhood_size = 1; /** minimum number of neighbors for a particle
+	                           to be outputed (including the particle itself */
 
 	/* PCISPH */
 	dfloat density_error_threshold = 0.01; /** acceptable error threshold for
