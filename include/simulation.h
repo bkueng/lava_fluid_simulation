@@ -196,6 +196,13 @@ private:
 	inline void checkGridBoundary(Math::Vec3f& position, Math::Vec3f& velocity) const;
 
 	/**
+	 * find a position above ground with conditions:
+	 * @param position     current position below ground, will be changed
+	 * @param dir          opposite velocity direction where (position+dir) is above ground
+	 */
+	inline void findPosAboveGround(Math::Vec3f& position, const Math::Vec3f& dir) const;
+
+	/**
 	 * @param try_to_defer     try not to add any particles in this step, but
 	 *                         accumulate and add in the future. this is for
 	 *                         performance.

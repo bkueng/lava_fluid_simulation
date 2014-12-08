@@ -61,6 +61,23 @@ void Simulation::checkGridBoundary(Math::Vec3f& position, Math::Vec3f& velocity)
 	}
 }
 
+void Simulation::findPosAboveGround(Math::Vec3f& position, const Math::Vec3f& dir) const {
+	dfloat a=0, b=1, dheight=1;
+	int iters = 10;
+	while (--iters >= 0 && dheight > Math::FEQ_EPS) {
+		dfloat middle = (a+b)/2.;
+		Vec3f middle_pos = position + middle * dir;
+		dfloat height = m_height_field.lookup(middle_pos.x, middle_pos.z);
+		if (middle_pos.y <= height) {
+			a = middle;
+		} else {
+			dheight = middle_pos.y - height;
+			b = middle;
+		}
+	}
+	position = position + b*dir;
+}
+
 void Simulation::run() {
 
 	initOutput();
@@ -224,9 +241,8 @@ void Simulation::run() {
 				if(m_config.ground_method == SimulationConfig::GroundElastic) {
 					dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
 					if(pos.y < height_field_val) {
-						Vec3f n;
-						m_height_field.normal(pos.x, pos.z, n);
-						pos.y = height_field_val + Math::FEQ_EPS;
+						Vec3f dir = -dt * particle.predicted_velocity;
+						findPosAboveGround(pos, dir);
 						//no need to update velocity
 					}
 				}
@@ -326,11 +342,13 @@ void Simulation::run() {
 			if(m_config.ground_method == SimulationConfig::GroundElastic) {
 				dfloat height_field_val = m_height_field.lookup(pos.x, pos.z);
 				if(pos.y < height_field_val) {
+					Vec3f dir = -dt * particle.velocity;
+					findPosAboveGround(pos, dir);
 					Vec3f n;
 					m_height_field.normal(pos.x, pos.z, n);
-					pos.y = height_field_val + Math::FEQ_EPS;
 					//reflect velocity
 					particle.velocity = particle.velocity - (2.*dot(particle.velocity, n))*n;
+					height_field_val = pos.y; //make sure to set the ground flag
 				}
 				//ground particle flag
 				particle.changeFlag(Particle::FLAG_IS_ON_GROUND,
