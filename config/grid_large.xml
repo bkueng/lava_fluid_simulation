@@ -62,7 +62,7 @@
 			pass4="temporalblur 1"
 			constantwidth="0.005"
 			min_temperature="0.67">
-			<remove_line_from_scene match="surface.tif"></remove_line_from_scene>
+			<remove_line_from_scene match="surface_out_000000"></remove_line_from_scene>
 		</rendering>
 	</output>
 -->

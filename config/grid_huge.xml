@@ -76,7 +76,7 @@
 			constantwidth="0.0021"
 			min_temperature="0.75"
 			max_temperature="1.05">
-			<remove_line_from_scene match="surface.tif"></remove_line_from_scene>
+			<remove_line_from_scene match="surface_out_000000"></remove_line_from_scene>
 		</rendering>
 	</output>
 -->
