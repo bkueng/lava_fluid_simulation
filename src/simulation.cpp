@@ -796,11 +796,21 @@ Math::Vec3f Simulation::getInitVelocity(const ErruptionConfig& config) {
 	return velocity;
 }
 
+Math::Vec3f ErruptionSourceBase::interpolateBetween(const Math::Vec2f& start,
+		const Math::Vec2f& end, const HeightField& height_field, dfloat y_offset,
+		dfloat u, dfloat v) {
+	Vec3f pos;
+	pos.x = Math::lerp(start.x, end.x, u);
+	pos.z = Math::lerp(start.y, end.y, v);
+	pos.y = height_field.lookup(pos.x, pos.z) + Math::FEQ_EPS + y_offset;
+	return pos;
+}
+
 Math::Vec3f ErruptionSourceLineSegment::getPosition(
 		const HeightField& height_field, dfloat u, dfloat v) {
-	Vec3f pos;
-	pos.x = Math::lerp(m_start.x, m_end.x, u);
-	pos.z = Math::lerp(m_start.y, m_end.y, u);
-	pos.y = height_field.lookup(pos.x, pos.z) + Math::FEQ_EPS + m_y_offset;
-	return pos;
+	return interpolateBetween(m_start, m_end, height_field, m_y_offset, u, u);
+}
+Math::Vec3f ErruptionSourceGrid::getPosition(
+		const HeightField& height_field, dfloat u, dfloat v) {
+	return interpolateBetween(m_start, m_end, height_field, m_y_offset, u, v);
 }

@@ -38,22 +38,36 @@ public:
 	 * @return                 point above the heightfield
 	 */
 	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v) = 0;
-private:
+protected:
+	/** 2D interpolation between start & end */
+	static inline Math::Vec3f interpolateBetween(const Math::Vec2f& start, const Math::Vec2f& end,
+			const HeightField& height_field, dfloat y_offset, dfloat u, dfloat v);
+
+	dfloat m_y_offset = 0;
 };
 
 class ErruptionSourceLineSegment : public ErruptionSourceBase {
 public:
 	ErruptionSourceLineSegment(const Math::Vec2f& start, const Math::Vec2f& end, dfloat y_offset)
-		: m_start(start), m_end(end), m_y_offset(y_offset) {}
+		: m_start(start), m_end(end) { m_y_offset = y_offset; }
 
 	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v);
 private:
 	Math::Vec2f m_start;
 	Math::Vec2f m_end;
-	dfloat m_y_offset;
 };
 
-//TODO: more source types: rectangle source...
+/** erruption on an axis aligned grid */
+class ErruptionSourceGrid : public ErruptionSourceBase {
+public:
+	ErruptionSourceGrid(const Math::Vec2f& start, const Math::Vec2f& end, dfloat y_offset)
+		: m_start(start), m_end(end) { m_y_offset = y_offset; }
+
+	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v);
+private:
+	Math::Vec2f m_start;
+	Math::Vec2f m_end;
+};
 
 
 struct ErruptionConfig {

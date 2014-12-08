@@ -315,10 +315,16 @@ void CMain::processArgs()
 			if ((source_node = erruption.child("source-line"))) {
 				Vec2f start, end;
 				istringstream(source_node.attribute("start").as_string("0 0")) >> start;
-				istringstream(source_node.attribute("end").as_string("0 0")) >> end;
+				istringstream(source_node.attribute("end").as_string("1 1")) >> end;
 				dfloat y_offset = (dfloat)source_node.attribute("y_offset").as_double(0.);
 				erruption_config.source = std::make_shared<ErruptionSourceLineSegment>(start, end, y_offset);
-			} //else if: TODO: other types...
+			} else if ((source_node = erruption.child("source-grid"))) {
+				Vec2f start, end;
+				istringstream(source_node.attribute("start").as_string("0 0")) >> start;
+				istringstream(source_node.attribute("end").as_string("1 1")) >> end;
+				dfloat y_offset = (dfloat)source_node.attribute("y_offset").as_double(0.);
+				erruption_config.source = std::make_shared<ErruptionSourceGrid>(start, end, y_offset);
+			}
 
 			config.erruptions.push_back(erruption_config);
 		}
