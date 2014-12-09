@@ -113,7 +113,7 @@ Grid<Entry>::Grid(HeightField& height_field, dfloat cell_size, int num_y_cells) 
 
 	//init elevations
 	m_elevations = new dfloat[m_width * m_depth];
-	dfloat cell_y_offset = -2.*m_cell_size.y; //safety gap, to make sure no
+	dfloat cell_y_offset = -4.*m_cell_size.y; //safety gap, to make sure no
 								//particle position will ever be below the grid
 	//query the heightfield in a (coarse) grid to find the lowest value inside
 	//each grid cell
