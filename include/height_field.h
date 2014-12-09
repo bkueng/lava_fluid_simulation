@@ -102,8 +102,7 @@ protected:
 
 
 dfloat HeightField::lookup(dfloat x, dfloat z) const {
-	DEBUG_ASSERT(x >= 0. && x < 1., "x out of range: %f", (float)x);
-	DEBUG_ASSERT(z >= 0. && z < m_field_depth, "z out of range: %f", (float)z);
+	if (x < 0 || x > 1. || z < 0 || z > m_field_depth) return 0;
 
 	dfloat fx = x*(dfloat)(m_width-1);
 	dfloat fz = z/m_field_depth*(dfloat)(m_depth-1);

@@ -81,8 +81,7 @@ void HeightField::finalizeInit() {
 }
 
 void HeightField::normal(dfloat x, dfloat z, Math::Vec3f& normal) const {
-	DEBUG_ASSERT(x >= 0. && x < 1., "x out of range: %f", (float)x);
-	DEBUG_ASSERT(z >= 0. && z < m_field_depth, "z out of range: %f", (float)z);
+	if (x < 0 || x > 1. || z < 0 || z > m_field_depth) return;
 
 	dfloat fx = x*(dfloat)(m_width-1);
 	dfloat fz = z/m_field_depth*(dfloat)(m_depth-1);
