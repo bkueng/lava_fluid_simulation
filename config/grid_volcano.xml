@@ -27,7 +27,7 @@
 			 0.0002 already produces small instabilities -->
 
 		<heightfield
-			file="data/height_field/volcan.tif"
+			file="data/height_field/volcano.tif"
 			scaling="0.3">
 			<tiff step_x="1" step_y="1"></tiff>
 		</heightfield>
@@ -49,7 +49,7 @@
 		format="point"
 		color="temperature">
 		<rendering
-			pass0="data/scenes/volcan.rib"
+			pass0="data/scenes/volcano.rib"
 			constantwidth="0.003">
 		</rendering>
 	</output>
