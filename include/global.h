@@ -34,7 +34,7 @@ using namespace std;
 #include "exception.h"
 #include "logging.h"
 
-typedef float dfloat;
+typedef double dfloat;
 
 
 #define SAVE_DEL(x) if(x) { delete(x); x=NULL; }

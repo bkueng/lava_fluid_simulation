@@ -5,17 +5,15 @@
 		output_rate="1"
 		smoothing_kernel_size="0.005"
 		num_y_cells="100"
-		pressure_k="1000"
 		rho0="1000"
 		particle_mass="0.0072"
 		ground_method="elastic"
 		ground_spring="3000" 
 		gravity="0 -9.81 0"
-		time_step="0.0001"
+		time_step="0.0002"
 		surface_air_threshold="0.4"
+		min_density_iterations="1"
 		>
-		<!-- Note: this small timestep is needed to avoid instabilities.
-			 0.0002 already produces small instabilities -->
 
 		<heightfield
 			file="data/height_field/flat.tif"

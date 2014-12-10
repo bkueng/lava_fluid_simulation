@@ -238,7 +238,7 @@ Warp::uniformHemisphere(Vec3f* v, float s, float t)
 {
 	v->z = s;
 	float theta = t * (M_PI*2.f);
-	float r = sqrtf(std::max(0.f, 1.f - v->z*v->z));
+	float r = sqrtf(std::max((dfloat)0., (dfloat)1. - v->z*v->z));
 	v->x = r*cosf(theta);
 	v->y = r*sinf(theta);
 }
@@ -267,7 +267,7 @@ Warp::cosineHemisphere(Vec3f* v, float s, float t)
 	v->x = r*cosf(theta);
 	v->y = r*sinf(theta);
 	//project to hemisphere
-	v->z = sqrtf(std::max(0.f, 1.f - s));
+	v->z = sqrtf(std::max((dfloat)0., (dfloat)1. - s));
 }
 
 inline float
@@ -289,7 +289,7 @@ Warp::phongHemisphere(Vec3f* v, float s, float t, float n)
 	// TODO: use fastPow ??
 	
 	v->z = pow(1.f-s, 1.f/(n+1.f));
-	float r = sqrtf(std::max(0.f, 1.f-v->z*v->z));
+	float r = sqrtf(std::max((dfloat)0., (dfloat)1.-v->z*v->z));
 	float phi = t * (M_PI*2.f);
 	v->x = r*cos(phi);
 	v->y = r*sin(phi);
@@ -310,7 +310,7 @@ Warp::roughHemisphere(Vec3f* v, float s, float t, float alphag)
 {
 	v->z = 1.f / sqrtf(std::max(0.f, alphag*alphag * s / (1.f-s) + 1.f));
 	float theta = t * (M_PI*2.f);
-	float r = sqrtf(std::max(0.f, 1.f - v->z*v->z));
+	float r = sqrtf(std::max((dfloat)0., (dfloat)1. - v->z*v->z));
 	v->x = r*cosf(theta);
 	v->y = r*sinf(theta);
 }
@@ -334,7 +334,7 @@ Warp::uniformTriangle(Vec3f* v, float s, float t, const Vec3f& a,
 inline float
 Warp::uniformTrianglePdf(const Vec3f& a, 
     		const Vec3f& b, const Vec3f& c) {
-	float triangle_area = cross(b-a, c-a).length()/2.f;
+	float triangle_area = cross(b-a, c-a).length()/2.;
 	return 1.f / triangle_area;
 }
 

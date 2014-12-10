@@ -1,11 +1,29 @@
-### SPH Lava Simulation on CPU ###
+### PCISPH Lava Simulation on CPU ###
 
-This is a 3D lava particle simulator based on Smoothed-Particle Hydrodynamics.
+This is a 3D lava particle simulator based on Smoothed-Particle Hydrodynamics
+(SPISPH).
 It is a project developed in the ETH course Physically-based Simulation.
 
 
+#### Features ####
+* Predictive-Corrective Incompressible SPH simulation based on 3D grid and
+  neighbor lists (for pure SPH version, see git tag pure\_SPH)
+* Temperature diffusion inside volume and to the ground and air
+* Spring and elastic impact based ground collisions
+* Viscosity calculation based on temperature
+* Multithreading using OpenMP
+* Configurable neighbor lookup distance so that neighbor lists can be used for
+  multiple timesteps
+* Multiple rendering modes using a RIB (Renderman) scene output file:
+  * Point rendering (with different color modes: density, temperature, surface
+    or shader)
+  * Spheres or oriented disks
+  * Surface rendering using disk splatting
+
+
 #### Compilation ####
-There are no external dependencies. The code works under Linux & Mac.
+There are no external dependencies for the simulator. The code works under Linux
+and Mac.
 
 Release build:
 `$ make`
@@ -18,9 +36,16 @@ Pixie:
 `$ cd data/shaders`
 `$ sdrc *.sl`
 
+The simulation output can get considerably large, so there is an option to
+compile with compressed output (gzip files, requires libz). Pixie can directly
+read it, however simulation performance suffers quite a bit.
+`$ make clean && make COMPRESSION=1`
+
+
 ##### Script Dependencies #####
-* render script: Renderman compliant renderer (eg Pixie), ImageMagick for
-  surface rendering (spatial and temporal blurring steps)
+* render script: Renderman compliant renderer (eg Pixie
+  http://www.renderpixie.com/), ImageMagick for surface rendering (spatial and
+  temporal blurring steps)
 * video script: ffmpeg
 
 
@@ -30,12 +55,21 @@ field (see include/simulation.h for documentation of the config parameters).
 The output is a RenderMan Scene File (RIB), which can be rendered with a
 RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 
+Simulator output:
+`#P: 13656, T:  1.463/10.000, steps:  1.8/s (549ms), avg_nei: 41, nei_upd:50% temp:[617 1000] avg_it:12`
+With current number of particles, current and total simulation time, simulation
+steps per second and average time of one timestep, average number of neighbors,
+percentage of steps where neighbor lists needed to be updated, [min max]
+temperature and average number of iterations for PCI loop.
+
 ##### Example #####
 `$ ./simulator -c config/grid_simple.xml -f 100`
 `$ ./scripts/render.sh config/grid_simple.xml -r <pixie_bin>/rndr`
 `$ ./scripts/video.sh output/rendering/grid_simple --fps 20`
 
+
 ##### Configuration #####
+Configuration files are under ./config using xml files.
 How to setup & tune configuraton parameters:
 * To figure out the particle mass, first use a particles\_grid with the desired
   particle density and calc\_mass=true. Running the simulation will output the
@@ -44,6 +78,8 @@ How to setup & tune configuraton parameters:
   simulation has around 30-40 average neighbors (avg\_nei).
 * Then slightly increase the `lookup_dist` to have around 20% neighbor list
   updates (nei\_upd) for optimal performance.
+* To get a stable simulation, the time\_step needs to be low enough and the
+  viscosity high enough
 * Make sure the surface particles are correctly calculated by changing
   surface\_air\_threshold. To visualize, set color="surface" in output.
 * The rate how fast the temperature diffuses within the fluid and to the air,
@@ -76,6 +112,7 @@ Parts of the implementation are based on these papers:
 * Animating Lava Flows, Dan Stora et al., 1999
 * Numerical simulation of lava flow using a GPU SPH model, Alexis Herault et
   al., 2011
+* Predictive-Corrective Incompressible SPH, B. Solenthaler et al., 2009
 
 
 Copyright 2014 Hans Hardmeier <hanshardmeier@gmail.com>

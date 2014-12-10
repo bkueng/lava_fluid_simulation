@@ -78,6 +78,7 @@ void CMain::parseCommandLine(int argc, char* argv[])
 	m_parameters->addParam("generate-rib-heightfield", 'g');
 
 	m_parameters->addParam("frames", 'f');
+	m_parameters->addSwitch("print-density", ' ');
 	
 	
 	m_cl_parse_result = m_parameters->parse();
@@ -103,6 +104,8 @@ void CMain::printHelp()
 		   "\n"
 		   " options\n"
 		   "  -f, --frames <num_frames>       limit number of simulated frames\n"
+		   "  --print-density                 before starting simulation, print average density\n"
+		   "                                  of grid particles (this can be slow). useful to find rho0\n"
 		   "\n"
 		   "  -v, --verbose                   print debug messages\n"
 		   "                                  (same as --log debug)\n"
@@ -239,6 +242,8 @@ void CMain::processArgs()
 		fclose(file);
 	}
 
+	bool print_density = m_parameters->getSwitch("print-density");
+
 	if(do_simulate || m_parameters->getSwitch("simulate")) {
 		LOG(DEBUG, "do simulation");
 		SimulationConfig config;
@@ -255,7 +260,6 @@ void CMain::processArgs()
 			THROW_s(EINVALID_PARAMETER, "Config Error: lookup_dist < smoothing_kernel_size");
 		config.cell_size = (dfloat)sim_node.attribute("cell_size").as_double(config.neighbor_lookup_dist);
 		config.num_y_cells = sim_node.attribute("num_y_cells").as_int(20);
-		config.k = (dfloat)sim_node.attribute("pressure_k").as_double(1000);
 		config.rho0 = (dfloat)sim_node.attribute("rho0").as_double(1000);
 		config.particle_mass = (dfloat)sim_node.attribute("particle_mass").as_double(0.01);
 		config.viscosity_coeff_a = (dfloat)sim_node.attribute("viscosity_coeff_a").as_double(0.002);
@@ -287,6 +291,10 @@ void CMain::processArgs()
 			LOG(ERROR, "unknown ground_method (valid are: 'elastic', 'spring')");
 			return;
 		}
+		config.density_error_threshold = (dfloat)sim_node.attribute(
+				"density_error_threshold").as_double(0.01);
+		config.min_density_iterations = sim_node.attribute("min_density_iterations").as_int(3);
+		config.max_density_iterations = sim_node.attribute("max_density_iterations").as_int(200);
 
 		//erruptions
 		xml_node erruptions_node = sim_node.child("erruptions");
@@ -307,10 +315,16 @@ void CMain::processArgs()
 			if ((source_node = erruption.child("source-line"))) {
 				Vec2f start, end;
 				istringstream(source_node.attribute("start").as_string("0 0")) >> start;
-				istringstream(source_node.attribute("end").as_string("0 0")) >> end;
+				istringstream(source_node.attribute("end").as_string("1 1")) >> end;
 				dfloat y_offset = (dfloat)source_node.attribute("y_offset").as_double(0.);
 				erruption_config.source = std::make_shared<ErruptionSourceLineSegment>(start, end, y_offset);
-			} //else if: TODO: other types...
+			} else if ((source_node = erruption.child("source-grid"))) {
+				Vec2f start, end;
+				istringstream(source_node.attribute("start").as_string("0 0")) >> start;
+				istringstream(source_node.attribute("end").as_string("1 1")) >> end;
+				dfloat y_offset = (dfloat)source_node.attribute("y_offset").as_double(0.);
+				erruption_config.source = std::make_shared<ErruptionSourceGrid>(start, end, y_offset);
+			}
 
 			config.erruptions.push_back(erruption_config);
 		}
@@ -323,6 +337,7 @@ void CMain::processArgs()
 		createDirectory(config.output_dir);
 		xml_node rendering_node = output_node.child("rendering");
 		config.output_constantwidth = rendering_node.attribute("constantwidth").as_float(0.003);
+		config.min_neighborhood_size = output_node.attribute("min_neighborhood_size").as_int(1);
 		string output_format = output_node.attribute("format").as_string("point");
 		if (output_format == "point") {
 			config.output_format = SimulationConfig::FormatPoint;
@@ -335,9 +350,9 @@ void CMain::processArgs()
 		} else {
 			THROW_s(EINVALID_PARAMETER, "Error: unknown output format '%s'\n", output_format.c_str());
 		}
-		string output_color = output_node.attribute("color").as_string("density");
-		if (output_color == "density") {
-			config.output_color = SimulationConfig::ColorDensity;
+		string output_color = output_node.attribute("color").as_string("pressure");
+		if (output_color == "pressure") {
+			config.output_color = SimulationConfig::ColorPressure;
 		} else if(output_color == "temperature") {
 			config.output_color = SimulationConfig::ColorTemperature;
 		} else if(output_color == "surface") {
@@ -367,7 +382,7 @@ void CMain::processArgs()
 			dfloat temperature = (dfloat)particles_grid.attribute("temperature").as_double(100);
 			bool calc_mass = particles_grid.attribute("calc_mass").as_bool(false);
 			simulation->addParticlesOnGrid(min_pos, max_pos, counts, velocity,
-					temperature, calc_mass);
+					temperature, calc_mass, print_density);
 		}
 
 		simulation->run();

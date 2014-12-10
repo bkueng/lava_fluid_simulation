@@ -31,7 +31,7 @@ WorldBegin
             "float Ka" 1.0
             "float roughness" 0.10000000149011612
             "color specularcolor" [ 1.0 1.0 1.0 ]
-            "string texturename" "HEIGHT_FIELD_FILE"
+            "string texturename" "HEIGHT_FIELD_TEXTURE"
 			"string glow_tex" "output/rendering/OUTPUT_DIRECTORY/tblur_surface_out_000000.tif"
 			"float glow_amp" 0.8
 

@@ -38,22 +38,36 @@ public:
 	 * @return                 point above the heightfield
 	 */
 	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v) = 0;
-private:
+protected:
+	/** 2D interpolation between start & end */
+	static inline Math::Vec3f interpolateBetween(const Math::Vec2f& start, const Math::Vec2f& end,
+			const HeightField& height_field, dfloat y_offset, dfloat u, dfloat v);
+
+	dfloat m_y_offset = 0;
 };
 
 class ErruptionSourceLineSegment : public ErruptionSourceBase {
 public:
 	ErruptionSourceLineSegment(const Math::Vec2f& start, const Math::Vec2f& end, dfloat y_offset)
-		: m_start(start), m_end(end), m_y_offset(y_offset) {}
+		: m_start(start), m_end(end) { m_y_offset = y_offset; }
 
 	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v);
 private:
 	Math::Vec2f m_start;
 	Math::Vec2f m_end;
-	dfloat m_y_offset;
 };
 
-//TODO: more source types: rectangle source...
+/** erruption on an axis aligned grid */
+class ErruptionSourceGrid : public ErruptionSourceBase {
+public:
+	ErruptionSourceGrid(const Math::Vec2f& start, const Math::Vec2f& end, dfloat y_offset)
+		: m_start(start), m_end(end) { m_y_offset = y_offset; }
+
+	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v);
+private:
+	Math::Vec2f m_start;
+	Math::Vec2f m_end;
+};
 
 
 struct ErruptionConfig {
@@ -88,7 +102,6 @@ struct SimulationConfig {
 	int num_y_cells = 65; /** number of cells in y direction: increase this for smaller cell_size! */
 
 	//pressure constants
-	dfloat k = 1000; /** stiffness parameter: higher stiffness needs smaller timesteps */
 	dfloat rho0 = 1000; /** rest density of a particle */
 
 	dfloat viscosity_coeff_a = 0.002;
@@ -128,14 +141,14 @@ struct SimulationConfig {
 	std::string output_dir; /** output directory without ending '/' */
 	int output_rate = 1; /** write output data every x timestep */
 	enum OutputColor {
-		ColorDensity = 0,  /** "density" */
+		ColorPressure = 0,  /** "pressure" */
 		ColorTemperature,  /** "temperature" (lowest=blue, middle=green, highest=red) */
 		ColorSurface,      /** "surface" indicate whether particles are on
 							   ground and/or on surface */
 		ColorShader        /** "shader" additional normalized temperature array
 		                       for shader. only with FormatSurface */
 	};
-	OutputColor output_color = ColorDensity;
+	OutputColor output_color = ColorPressure;
 	enum OutputFormat {
 		FormatPoint = 0, /** "point". render flat points */
 		FormatSphere,    /** "sphere". render spheres */
@@ -144,6 +157,14 @@ struct SimulationConfig {
 	};
 	OutputFormat output_format = FormatPoint;
 	float output_constantwidth = 0.003; /** output sphere width/point width */
+	int min_neighborhood_size = 1; /** minimum number of neighbors for a particle
+	                           to be outputed (including the particle itself */
+
+	/* PCISPH */
+	dfloat density_error_threshold = 0.01; /** acceptable error threshold for
+								density update iterations */
+	int min_density_iterations = 3; /** minimum number of density update iterations */
+	int max_density_iterations = 200; /** maximum number of density update iterations */
 };
 
 /**
@@ -167,10 +188,11 @@ public:
 	 * @param temperature
 	 * @param calc_mass           whether particle mass should be calculated
 	 *                            (from the volume). if false, use the config value
+	 * @param print_avg_density   if true calculate average density & print (may be slow)
 	 */
 	void addParticlesOnGrid(const Math::Vec3f& min_pos, const Math::Vec3f& max_pos,
         const Math::Vec3i& counts, const Math::Vec3f& initial_velocity,
-		dfloat temperature, bool calc_mass);
+		dfloat temperature, bool calc_mass, bool print_avg_density = false);
 private:
 
 	/** add a new particle. Note that this (can) invalidate all existing particle
@@ -179,14 +201,22 @@ private:
 	inline void addParticle(const Math::Vec3f& position, const Math::Vec3f& velocity,
 			dfloat temperature);
 
-	inline dfloat pressure(const Particle& particle) const {
-		return std::max((dfloat)0., m_config.k * (particle.density - m_config.rho0));
-	}
-
 	inline dfloat viscosity(const Particle& particle) const {
 		return m_config.viscosity_coeff_b *
 				exp(-m_config.viscosity_coeff_a * particle.temperature);
 	}
+
+	/** check whether a position is within the grid and adjust position &
+	 * velocity if it's outside.
+	 */
+	inline void checkGridBoundary(Math::Vec3f& position, Math::Vec3f& velocity) const;
+
+	/**
+	 * find a position above ground with conditions:
+	 * @param position     current position below ground, will be changed
+	 * @param dir          opposite velocity direction where (position+dir) is above ground
+	 */
+	inline void findPosAboveGround(Math::Vec3f& position, const Math::Vec3f& dir) const;
 
 	/**
 	 * @param try_to_defer     try not to add any particles in this step, but
@@ -195,6 +225,8 @@ private:
 	 * @return true if particle array was changed (ie particles added/removed)
 	 */
 	bool handleErruptions(dfloat simulation_time, dfloat dt, bool try_to_defer);
+
+	Math::Vec3f getInitVelocity(const ErruptionConfig& config);
 
 
 	void initOutput();
