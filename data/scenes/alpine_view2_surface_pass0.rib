@@ -1,0 +1,69 @@
+
+Format 800 500 1
+Hider "hidden"
+
+Option "limits" "bucketsize" [ 64 64 ]
+Option "limits" "gridsize" [ 256 ]
+Option "limits" "eyesplits" [ 6 ]
+
+# data output rendering pass
+
+FrameBegin 1
+PixelFilter "box" 1 1
+
+Declare "Nn" "varying vector"
+Declare "Mask" "varying float"
+Declare "Zdist" "varying float"
+Declare "Temp" "uniform float"
+Declare "TempOut" "varying float"
+Display "+output/rendering/OUTPUT_DIRECTORY/normal_out_000000.tif" "tiff" "Nn" "quantize" [128 255 0 255]
+Display "+output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif" "tiff" "Mask" "quantize" [0 255 0 255]
+# restricts max z value to 20 (in camera space)
+Display "+output/rendering/OUTPUT_DIRECTORY/zdist_out_000000.tif" "tiff" "Zdist" "quantize" [0 3277 0 65535]
+Display "+output/rendering/OUTPUT_DIRECTORY/temperature_out_000000.tif" "tiff" "TempOut"
+	"quantize" [0 65535 0 65535]
+
+ReadArchive "data/scenes/include/alpine_view2_camera.rib"
+
+WorldBegin
+	# no lights needed here
+
+
+    AttributeBegin
+        Attribute "identifier" "name" [ "heightfield" ]
+		Color [ 0.8 1 1 ]
+        Opacity [ 1.0 1.0 1.0 ]
+
+		ShadingRate 3
+		Matte 1
+		Attribute "displacementbound" "sphere" [ 0.5 ] "coordinatesystem" [ "surface" ]
+		Displacement "bumpy"
+			"uniform float amplitude" [ -0.4 ]
+			"uniform string texturename" "HEIGHT_FIELD_FILE"
+
+		PointsPolygons
+			[ 4 ]
+			[ 0 1 2 3 ]
+			"P" [ 0 0 0  1 0 0  1 0 1  0 0 1 ]
+			"st" [ 0 1  1 1  1 0  0 0 ]
+    AttributeEnd
+
+	# particles
+    AttributeBegin
+        Surface "output_data" 
+		ReadArchive "output/simulation/OUTPUT_DIRECTORY/frame_000000.rib"
+    AttributeEnd
+
+	# displacement plane
+    AttributeBegin
+		Surface "output_data"
+			"float do_mask" 0
+		PointsPolygons
+			[ 4 ]
+			[ 0 1 2 3 ]
+			"P" [ 0 0 0  1 0 0  1 0 1  0 0 1 ]
+	AttributeEnd
+
+WorldEnd
+FrameEnd
+

@@ -1,0 +1,85 @@
+
+Format 800 500 1
+Hider "hidden"
+
+Option "limits" "bucketsize" [ 64 64 ]
+Option "limits" "gridsize" [ 256 ]
+Option "limits" "eyesplits" [ 6 ]
+
+# final rendering pass
+
+FrameBegin 1
+# use this for higher quality
+#PixelSamples 2 2
+#PixelFilter "catmull-rom" 2 2
+
+Declare "Temp" "uniform float"
+Display "output/rendering/OUTPUT_DIRECTORY/out_000000.tif" "file" "rgb"
+
+ReadArchive "data/scenes/include/alpine_view2_camera.rib"
+
+WorldBegin
+		LightSource "ambientlight" 1 "intensity" 0.2
+		LightSource "distantlight" 2 "intensity" 0.2 "from" [14 6 7] "to" [0 -2 0]
+			"lightcolor" [1 1 1]
+		LightSource "distantlight" 3 "intensity" 1 "from" [-4 6 7] "to" [0 0 0]
+			"lightcolor" [1 1 1]
+		Illuminate 2 0
+
+    AttributeBegin
+        Attribute "identifier" "name" [ "heightfield" ]
+		Color [ 0.8 1 1 ]
+        Opacity [ 1.0 1.0 1.0 ]
+        Surface "paintedplasticglow" 
+            "float Ks" 0.5
+            "float Kd" 0.5
+            "float Ka" 1.0
+            "float roughness" 0.10000000149011612
+            "color specularcolor" [ 1.0 1.0 1.0 ]
+            "string texturename" "HEIGHT_FIELD_TEXTURE"
+			"string glow_tex" "output/rendering/OUTPUT_DIRECTORY/tblur_surface_out_000000.tif"
+			"float glow_amp" 0.8
+
+		# shading rate: decrease for better quality (~0.5 or lower) & to avoid
+		# artifacts. increase for better speed
+		ShadingRate 3
+		Attribute "displacementbound" "sphere" [ 0.5 ] "coordinatesystem" [ "surface" ]
+		Displacement "bumpy"
+			"uniform float amplitude" [ -0.4 ]
+			"uniform string texturename" "HEIGHT_FIELD_FILE"
+
+		PointsPolygons
+			[ 4 ]
+			[ 0 1 2 3 ]
+			"P" [ 0 0 0  1 0 0  1 0 1  0 0 1 ]
+			"st" [ 0 1  1 1  1 0  0 0 ]
+    AttributeEnd
+
+
+    AttributeBegin
+		Color [ 1 0.20 0.05 ]
+		Attribute "displacementbound" "sphere" [ 5 ] "coordinatesystem" [ "surface" ]
+		Displacement "z_displ"
+			"uniform string displ_tex" "output/rendering/OUTPUT_DIRECTORY/zdist_out_000000.tif"
+			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif"
+		Surface "lava"
+			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif"
+			"uniform string normal_tex" "output/rendering/OUTPUT_DIRECTORY/normal_out_000000.tif"
+			"uniform string temperature_tex" "output/rendering/OUTPUT_DIRECTORY/temperature_out_000000.tif"
+			"Kd" 0.8
+			"Ks" 0.8
+			"roughness" 0.1
+			"specularcolor" [ 1 1 1 ]
+			"min_temperature" 0.6
+			"max_temperature" 1
+
+		PointsPolygons
+			[ 4 ]
+			[ 0 1 2 3 ]
+			"P" [ 0 0 0  1 0 0  1 0 1  0 0 1 ]
+	AttributeEnd
+
+WorldEnd
+FrameEnd
+
+
