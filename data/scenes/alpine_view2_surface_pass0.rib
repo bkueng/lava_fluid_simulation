@@ -1,5 +1,5 @@
 
-Format 800 500 1
+Format 1152 720 1
 Hider "hidden"
 
 Option "limits" "bucketsize" [ 64 64 ]
