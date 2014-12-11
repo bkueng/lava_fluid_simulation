@@ -1,0 +1,149 @@
+<config>
+
+	<!-- dynamic particle erruption with text heightmap. simulation is very
+		 unstable when particles get close to the text! (probably due to abrupt
+		 position displacement on ground collision)
+		 -->
+	<simulation
+		simulation_time="10.5"
+		output_rate="50"
+		smoothing_kernel_size="0.0060"
+		lookup_dist="0.0082"
+		num_y_cells="100"
+		rho0="700"
+		particle_mass="0.00002"
+		ground_method="elastic"
+		gravity="0 -16 3"
+		time_step="0.00010534"
+
+		density_error_threshold="0.0003"
+		max_density_iterations="160"
+		min_density_iterations="2"
+
+		init_velocity_perturb_angle="0"
+		viscosity_coeff_a="0.0002"
+		viscosity_coeff_b="27"
+
+		temperature_diffusion_coeff="900"
+		temperature_diffusion_coeff_air="0.025"
+		temperature_diffusion_coeff_ground="30000"
+
+		surface_air_threshold="0.4"
+		>
+
+		<heightfield
+			file="data/height_field/alpine-terrain-text.tif"
+			texture="data/textures/alpine-terrain-text.tif"
+			scaling="0.2">
+			<tiff step_x="1" step_y="1"></tiff>
+		</heightfield>
+
+		<erruptions>
+			<erruption
+				start_time="0"
+				duration="1.25"
+				particles_per_sec="3500"
+				init_velocity="0 -0.005 0.8"
+				>
+				<source-line
+					start="0.38 0.38"
+					end="0.46 0.38"
+					y_offset="0.00001"
+					></source-line>
+			</erruption>
+
+			<erruption
+				start_time="0"
+				duration="1.25"
+				particles_per_sec="2000"
+				init_temperature="1000"
+				init_velocity="0 -0.005 0.8"
+				>
+				<source-line
+					start="0.38 0.38"
+					end="0.46 0.38"
+					y_offset="0.008"
+					></source-line>
+			</erruption>
+
+			<erruption
+				start_time="0"
+				duration="1.1"
+				particles_per_sec="2500"
+				init_temperature="1000"
+				init_velocity="0 -0.005 0.8"
+				>
+				<source-line
+					start="0.38 0.38"
+					end="0.46 0.38"
+					y_offset="0.016"
+					></source-line>
+			</erruption>
+
+			<erruption
+				start_time="0"
+				duration="1.1"
+				particles_per_sec="2500"
+				init_temperature="1000"
+				init_velocity="0 -0.005 0.8"
+				>
+				<source-line
+					start="0.38 0.38"
+					end="0.46 0.38"
+					y_offset="0.024"
+					></source-line>
+			</erruption>
+
+		</erruptions>
+	</simulation>
+
+<!--
+	<output
+		format="point"
+		color="pressure"
+		min_neighborhood_size="3">
+		<rendering
+			pass0="data/scenes/alpine_view2.rib"
+			constantwidth="0.006">
+		</rendering>
+	</output>
+-->
+<!--
+	<output comment="surface rendering without glow"
+		format="surface"
+		color="shader"
+		min_neighborhood_size="3">
+		<rendering
+			pass0="data/scenes/alpine_view2_surface_pass0.rib"
+			pass1="blur 0x2.4 normal"
+			pass2="blur 0x0.2 temperature"
+			pass3="data/scenes/alpine_view2_surface_pass2.rib"
+			pass4="temporalblur 1"
+			constantwidth="0.006"
+			min_temperature="0.4"
+			max_temperature="1.25">
+			<remove_line_from_scene match="surface_out_000000"></remove_line_from_scene>
+		</rendering>
+	</output>
+-->
+	<output comment="surface rendering with glow"
+		format="surface"
+		color="shader"
+		min_neighborhood_size="3">
+		<rendering
+			pass0="data/scenes/alpine_view2_surface_pass0.rib"
+			pass1="blur 0x2.4 normal"
+			pass2="blur 0x0.2 temperature"
+			pass3="data/scenes/alpine_view2_surface_pass1.rib"
+			pass4="blur 0x8 surface"
+			pass5="temporalblur 3 surface"
+			pass6="data/scenes/alpine_view2_surface_pass2.rib"
+			pass7="temporalblur 1"
+			constantwidth="0.006"
+			min_temperature="0.58"
+			max_temperature="1.43">
+		</rendering>
+	</output>
+
+</config>
+
