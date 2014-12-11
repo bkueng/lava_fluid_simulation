@@ -70,7 +70,7 @@ surface lava ( float Ka = 1, Kd = .5, Ks = .5, roughness = .1;
 						color(0.6667, 0.0706, 0.0118), /* more darker red */
 						color(0.7686, 0.2000, 0.0078), /* darker red */
 						color(0.9725, 0.1098, 0.0392), /* red */
-						color(0.9725, 0.1098, 0.0392), /* red */
+						color(0.9725, 0.3098, 0.0092), /* red */
 						color(0.9569, 0.5843, 0.0000), /* bright orange */
 						color(0.9804, 0.9490, 0.2745), /* bright yellow */
 						color(1, 0.996, 0.4),
