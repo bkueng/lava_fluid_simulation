@@ -31,7 +31,7 @@
 			scaling="0.3">
 			<tiff step_x="1" step_y="1"></tiff>
 		</heightfield>
-
+<!--
 		<particles_grid
 			min_pos="0.41 0.01 0.3"
 			max_pos="0.49 0.03 0.39"
@@ -41,6 +41,48 @@
 			calc_mass="true"
 			>
 		</particles_grid>
+-->
+		<erruptions>
+			<erruption
+				start_time="0"
+				duration="3"
+				particles_per_sec="1000"
+				init_temperature="1000"
+				init_velocity="0.1 0.5 0.0"
+				>
+				<source-line
+					start="0.4 0.31"
+					end="0.42 0.38"
+					y_offset="0"
+					></source-line>
+			</erruption>
+		<erruption
+				start_time="0"
+				duration="3"
+				particles_per_sec="1000"
+				init_temperature="1000"
+				init_velocity="0.1 0.5 0.0"
+				>
+				<source-line
+					start="0.41 0.32"
+					end="0.43 0.39"
+					y_offset="0"
+					></source-line>
+			</erruption>
+<erruption
+				start_time="0"
+				duration="3"
+				particles_per_sec="1000"
+				init_temperature="1000"
+				init_velocity="0.1 0.5 0.0"
+				>
+				<source-line
+					start="0.42 0.33"
+					end="0.44 0.40"
+					y_offset="0"
+					></source-line>
+			</erruption>
+		</erruptions> 
 
 	</simulation>
 
