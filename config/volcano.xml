@@ -31,7 +31,8 @@
 
 		<heightfield
 			file="data/height_field/volcano.tif"
-			scaling="0.3">
+			scaling="0.3"
+			texture="data/textures/volcano_text.tif">
 			<tiff step_x="1" step_y="1"></tiff>
 		</heightfield>
 
@@ -145,7 +146,7 @@
 		</erruptions> 
 	</simulation>
 
-
+<!--
 	<output comment="point rendering with temperature as color"
 		format="point"
 		color="temperature"
@@ -155,6 +156,7 @@
 			constantwidth="0.0026">
 		</rendering>
 	</output>
+-->
 <!--
 	<output comment="surface rendering without glow"
 		format="surface"
@@ -173,7 +175,7 @@
 		</rendering>
 	</output>
 -->
-<!--
+
 	<output comment="surface rendering with glow"
 		format="surface"
 		color="shader"
@@ -192,5 +194,5 @@
 			max_temperature="1">
 		</rendering>
 	</output>
--->
+
 </config>
