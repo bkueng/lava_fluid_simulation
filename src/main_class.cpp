@@ -317,13 +317,17 @@ void CMain::processArgs()
 				istringstream(source_node.attribute("start").as_string("0 0")) >> start;
 				istringstream(source_node.attribute("end").as_string("1 1")) >> end;
 				dfloat y_offset = (dfloat)source_node.attribute("y_offset").as_double(0.);
-				erruption_config.source = std::make_shared<ErruptionSourceLineSegment>(start, end, y_offset);
+				bool absolute_offset = source_node.attribute("absolute_offset").as_bool(false);
+				erruption_config.source = std::make_shared<ErruptionSourceLineSegment>(start,
+						end, y_offset, absolute_offset);
 			} else if ((source_node = erruption.child("source-grid"))) {
 				Vec2f start, end;
 				istringstream(source_node.attribute("start").as_string("0 0")) >> start;
 				istringstream(source_node.attribute("end").as_string("1 1")) >> end;
 				dfloat y_offset = (dfloat)source_node.attribute("y_offset").as_double(0.);
-				erruption_config.source = std::make_shared<ErruptionSourceGrid>(start, end, y_offset);
+				bool absolute_offset = source_node.attribute("absolute_offset").as_bool(false);
+				erruption_config.source = std::make_shared<ErruptionSourceGrid>(start, end,
+						y_offset, absolute_offset);
 			}
 
 			config.erruptions.push_back(erruption_config);

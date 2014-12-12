@@ -40,16 +40,19 @@ public:
 	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v) = 0;
 protected:
 	/** 2D interpolation between start & end */
-	static inline Math::Vec3f interpolateBetween(const Math::Vec2f& start, const Math::Vec2f& end,
-			const HeightField& height_field, dfloat y_offset, dfloat u, dfloat v);
+	inline Math::Vec3f interpolateBetween(const Math::Vec2f& start, const Math::Vec2f& end,
+			const HeightField& height_field, dfloat u, dfloat v);
 
 	dfloat m_y_offset = 0;
+	bool m_absolute_offset = false;
 };
 
 class ErruptionSourceLineSegment : public ErruptionSourceBase {
 public:
-	ErruptionSourceLineSegment(const Math::Vec2f& start, const Math::Vec2f& end, dfloat y_offset)
-		: m_start(start), m_end(end) { m_y_offset = y_offset; }
+	ErruptionSourceLineSegment(const Math::Vec2f& start, const Math::Vec2f& end,
+			dfloat y_offset, bool absolute_offset)
+		: m_start(start), m_end(end)
+		{ m_y_offset = y_offset; m_absolute_offset = absolute_offset; }
 
 	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v);
 private:
@@ -60,8 +63,10 @@ private:
 /** erruption on an axis aligned grid */
 class ErruptionSourceGrid : public ErruptionSourceBase {
 public:
-	ErruptionSourceGrid(const Math::Vec2f& start, const Math::Vec2f& end, dfloat y_offset)
-		: m_start(start), m_end(end) { m_y_offset = y_offset; }
+	ErruptionSourceGrid(const Math::Vec2f& start, const Math::Vec2f& end,
+			dfloat y_offset, bool absolute_offset)
+		: m_start(start), m_end(end)
+		{ m_y_offset = y_offset; m_absolute_offset = absolute_offset; }
 
 	virtual Math::Vec3f getPosition(const HeightField& height_field, dfloat u, dfloat v);
 private:
