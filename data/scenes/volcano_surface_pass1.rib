@@ -1,0 +1,64 @@
+
+Format 871 490 1
+Hider "hidden"
+
+Option "limits" "bucketsize" [ 64 64 ]
+Option "limits" "gridsize" [ 256 ]
+Option "limits" "eyesplits" [ 6 ]
+
+# surface output rendering pass (for glow)
+
+FrameBegin 1
+
+Declare "Temp" "uniform float"
+Display "output/rendering/OUTPUT_DIRECTORY/surface_out_000000.tif" "file" "rgba"
+
+ReadArchive "data/scenes/include/volcano_camera.rib"
+
+WorldBegin
+	ReadArchive "data/scenes/include/volcano_lights.rib"
+
+    AttributeBegin
+        Attribute "identifier" "name" [ "heightfield" ]
+		Color [ 0.8 1 1 ]
+        Opacity [ 1.0 1.0 1.0 ]
+
+		ShadingRate 3
+		Matte 1
+		Attribute "displacementbound" "sphere" [ 0.5 ] "coordinatesystem" [ "surface" ]
+		Displacement "bumpy"
+			"uniform float amplitude" [ -0.4 ]
+			"uniform string texturename" "data/height_field/volcano_extended.tif"
+
+		PointsPolygons
+			[ 4 ]
+			[ 0 1 2 3 ]
+#			"P" [ 0 0 0  1 0 0  1 0 1  0 0 1 ]
+			"P" [ -1 0 -1  1 0 -1  1 0 2  -1 0 2 ]
+			"st" [ 0 1  1 1  1 0  0 0 ]
+    AttributeEnd
+
+
+    AttributeBegin
+		Color [ 1 0.20 0.05 ]
+		Attribute "displacementbound" "sphere" [ 5 ] "coordinatesystem" [ "surface" ]
+		Displacement "z_displ"
+			"uniform string displ_tex" "output/rendering/OUTPUT_DIRECTORY/zdist_out_000000.tif"
+			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif"
+		Surface "lava"
+			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif"
+			"uniform string normal_tex" "output/rendering/OUTPUT_DIRECTORY/normal_out_000000.tif"
+			"uniform string temperature_tex" "output/rendering/OUTPUT_DIRECTORY/temperature_out_000000.tif"
+			"Kd" 0.8
+			"Ks" 0.8
+			"roughness" 0.1
+			"specularcolor" [ 1 1 1 ]
+			"min_temperature" 0.6
+			"max_temperature" 1
+
+		ReadArchive "data/scenes/include/volcano_displ_plane.rib"
+	AttributeEnd
+
+WorldEnd
+FrameEnd
+

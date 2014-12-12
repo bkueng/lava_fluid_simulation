@@ -1,5 +1,5 @@
 
-Format 800 600 1
+Format 871 490 1
 Hider "hidden"
 
 
@@ -7,6 +7,7 @@ Option "limits" "bucketsize" [ 64 64 ]
 Option "limits" "gridsize" [ 256 ]
 Option "limits" "eyesplits" [ 6 ]
 
+Declare "Temp" "uniform float"
 
 FrameBegin 1
 Display "output/rendering/OUTPUT_DIRECTORY/out_000000.tif" "file" "rgb"
@@ -26,10 +27,6 @@ WorldBegin
             "float roughness" 0.10000000149011612
             "color specularcolor" [ 1.0 1.0 1.0 ]
             "string texturename" "HEIGHT_FIELD_FILE"
-#        Surface "metal" 
-#            "float Ka" 1.0
-#            "float roughness" 0.10000000149011612
-
 
 		# shading rate: decrease for better quality (~0.5 or lower) & to avoid
 		# artifacts. increase for better speed

@@ -161,13 +161,14 @@
 		color="shader"
 		min_neighborhood_size="3">
 		<rendering
-			pass0="data/scenes/alpine_surface_pass0.rib"
+			pass0="data/scenes/volcano_surface_pass0.rib"
 			pass1="blur 0x2.4 normal"
 			pass2="blur 0x0.3 temperature"
-			pass3="data/scenes/alpine_surface_pass2.rib"
+			pass3="data/scenes/volcano_surface_pass2.rib"
 			pass4="temporalblur 1"
 			constantwidth="0.0026"
-			min_temperature="0.67">
+			min_temperature="0.67"
+			max_temperature="1">
 			<remove_line_from_scene match="surface.tif"></remove_line_from_scene>
 		</rendering>
 	</output>
@@ -178,16 +179,17 @@
 		color="shader"
 		min_neighborhood_size="3">
 		<rendering
-			pass0="data/scenes/alpine_surface_pass0.rib"
+			pass0="data/scenes/volcano_surface_pass0.rib"
 			pass1="blur 0x2.4 normal"
 			pass2="blur 0x0.3 temperature"
-			pass3="data/scenes/alpine_surface_pass1.rib"
+			pass3="data/scenes/volcano_surface_pass1.rib"
 			pass4="blur 0x8 surface"
 			pass5="temporalblur 3 surface"
-			pass6="data/scenes/alpine_surface_pass2.rib"
+			pass6="data/scenes/volcano_surface_pass2.rib"
 			pass7="temporalblur 1"
 			constantwidth="0.0026"
-			min_temperature="0.67">
+			min_temperature="0.67"
+			max_temperature="1">
 		</rendering>
 	</output>
 -->
