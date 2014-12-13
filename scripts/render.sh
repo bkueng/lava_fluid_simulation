@@ -66,7 +66,7 @@ render() {
 	echo "Rendering $file"
 	runs=4 #max retries
 	while [ $runs -gt 0 ]; do
-		$timeout_prefix $renderer $threads_renderer_params "$scene_file_tmp_loc"
+		$timeout_prefix $renderer $threads_renderer_params "$scene_file_tmp_loc" >/dev/null
 		ret=$?
 		[[ $ret -eq 0 ]] && runs=0
 		let runs="$runs-1"
