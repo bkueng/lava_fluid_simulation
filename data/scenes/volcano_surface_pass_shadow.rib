@@ -1,0 +1,57 @@
+
+Format 900 900 1
+Hider "hidden"
+
+Option "limits" "bucketsize" [ 64 64 ]
+Option "limits" "gridsize" [ 256 ]
+Option "limits" "eyesplits" [ 6 ]
+
+# shadow rendering pass with camera perspective from the light
+
+FrameBegin 1
+
+Declare "Temp" "uniform float"
+Display "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tif" "zfile" "z"
+
+ReadArchive "data/scenes/include/volcano_camera_shadow.rib"
+
+WorldBegin
+	ReadArchive "data/scenes/include/volcano_lights_surface.rib"
+	Illuminate 2 1
+
+    AttributeBegin
+        Attribute "identifier" "name" [ "heightfield" ]
+		Color [ 0.8 1 1 ]
+        Opacity [ 1.0 1.0 1.0 ]
+        Surface "paintedplastic" 
+            "float Ks" 0.2
+            "float Kd" 0.5
+            "float Ka" 1.0
+            "float roughness" 0.10000000149011612
+            "color specularcolor" [ 1.0 1.0 1.0 ]
+            "string texturename" "HEIGHT_FIELD_FILE"
+
+		ShadingRate 5
+		Attribute "displacementbound" "sphere" [ 0.5 ] "coordinatesystem" [ "surface" ]
+		Displacement "bumpy"
+			"uniform float amplitude" [ -0.4 ]
+			"uniform string texturename" "data/height_field/volcano_extended.tif"
+
+
+		PointsPolygons
+			[ 4 ]
+			[ 0 1 2 3 ]
+#			"P" [ 0 0 0  1 0 0  1 0 1  0 0 1 ]
+			"P" [ -1 0 -1  1 0 -1  1 0 2  -1 0 2 ]
+			"st" [ 0 1  1 1  1 0  0 0 ]
+    AttributeEnd
+
+# we cannot render the surface here because we use a different camera
+# perspective!
+# this means no shadows from the surface.
+
+WorldEnd
+MakeShadow "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tif" "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tx"
+FrameEnd
+
+

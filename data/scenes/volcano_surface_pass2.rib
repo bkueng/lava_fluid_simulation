@@ -20,13 +20,34 @@ ReadArchive "data/scenes/include/volcano_camera.rib"
 
 WorldBegin
 	ReadArchive "data/scenes/include/volcano_lights_surface.rib"
+	AttributeBegin
+		Attribute "identifier" "name" [ "Sun" ]
+		LightSource "newshadowspot" 3
+			# same settings as the other light
+			"float intensity" [ 170.2 ]
+			"point from" [ 2.5 6 10 ]
+			"point to" [ 0 0 0 ]
+			"color lightcolor" [ 1.0 1.0 1.0 ]
+			"float coneangle" [ 0.2 ]
+			"float conedeltaangle" [ 0.1 ]
+
+			"uniform float bias" [ 0.015 ] #[ 0.01 ]
+			"uniform float falloff" [ 2 ] #[ 2 ]
+			"uniform float blur" [ 0.004 ] #[ 0 ]
+			"uniform float width" [ 1 ] #[ 1 ]
+			"uniform float samples" [ 64 ] #[ 16 ]
+			"uniform string shadowname" [ "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tx" ]
+			"uniform float beamdistribution" [ 2 ] #[ 2 ]
+	AttributeEnd
+	Illuminate 3 1
+	Illuminate 2 0
 
     AttributeBegin
         Attribute "identifier" "name" [ "extendedheightfield" ]
 		Color [ 0.8 1 1 ]
         Opacity [ 1.0 1.0 1.0 ]
         Surface "paintedplasticglow" 
-            "float Ks" 0.2
+            "float Ks" 0.22
             "float Kd" 0.5
             "float Ka" 1.0
             "float roughness" 0.10000000149011612
@@ -61,8 +82,8 @@ WorldBegin
 			"uniform string mask_tex" "output/rendering/OUTPUT_DIRECTORY/mask_out_000000.tif"
 			"uniform string normal_tex" "output/rendering/OUTPUT_DIRECTORY/normal_out_000000.tif"
 			"uniform string temperature_tex" "output/rendering/OUTPUT_DIRECTORY/temperature_out_000000.tif"
-			"Kd" 0.8
-			"Ks" 0.8
+			"Kd" 0.7
+			"Ks" 0.7
 			"roughness" 0.1
 			#"specularcolor" [ 1 0 0 ]
 			"specularcolor" [ 1 1 1 ]
