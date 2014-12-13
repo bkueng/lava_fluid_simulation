@@ -24,7 +24,7 @@ WorldBegin
 		Attribute "identifier" "name" [ "Sun" ]
 		LightSource "newshadowspot" 3
 			# same settings as the other light
-			"float intensity" [ 170.2 ]
+			"float intensity" [ 140.2 ]
 			"point from" [ 2.5 6 10 ]
 			"point to" [ 0 0 0 ]
 			"color lightcolor" [ 1.0 1.0 1.0 ]
