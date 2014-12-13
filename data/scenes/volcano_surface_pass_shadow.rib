@@ -11,6 +11,9 @@ Option "limits" "eyesplits" [ 6 ]
 FrameBegin 1
 
 Declare "Temp" "uniform float"
+#FIXME: this fails when running multiple tasks in parallel. also it is
+# independent of the surface/particles so it should be done in a pre-processing
+# rendering step
 Display "output/rendering/OUTPUT_DIRECTORY/shadow_depth.tif" "zfile" "z"
 
 ReadArchive "data/scenes/include/volcano_camera_shadow.rib"
