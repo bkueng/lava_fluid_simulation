@@ -83,13 +83,14 @@ How to setup & tune configuraton parameters:
 * Make sure the surface particles are correctly calculated by changing
   surface\_air\_threshold. To visualize, set color="surface" in output.
 * The rate how fast the temperature diffuses within the fluid and to the air,
-  can be changed with the parameters temperature\_diffusion\_coeff and TODO.
+  can be changed with the parameters temperature\_diffusion\_coeff and
+  temperature\_diffusion\_coeff\_air, temperature\_diffusion\_coeff\_ground.
   Increasing these will result in faster diffusion.
 * Multipass Rendering:
-  * Image blur: use passi="blur 0xX file" where file is one of the outputs of
+  * Image blur: use pass{i}="blur 0xX file" where file is one of the outputs of
     the previous rendering pass (eg normal). blurring will be done in-place, so
     the same file can be used in following rendering passes.
-  * Temporal blur: use passi="temporalblur size [name]" where size is the
+  * Temporal blur: use pass{i}="temporalblur size [name]" where size is the
     neighborhood size in the past and future (1 means to filter over previous,
     current and next image). If name is not given, the final output is blurred,
     otherwise it's the same convention as for the blur.
