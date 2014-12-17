@@ -1,7 +1,7 @@
 ### PCISPH Lava Simulation on CPU ###
 
 This is a 3D lava particle simulator based on Smoothed-Particle Hydrodynamics
-(SPISPH).
+(PCISPH).
 It is a project developed in the ETH course Physically-based Simulation.
 
 
@@ -25,27 +25,26 @@ It is a project developed in the ETH course Physically-based Simulation.
 There are no external dependencies for the simulator. The code works under Linux
 and Mac.
 
-Release build:
+Release build:  
 `$ make`
 
-Debug build:
+Debug build:  
 `$ make debug`
 
 Then to render you need to first compile the shaders in data/shaders. Eg for
-Pixie:
-`$ cd data/shaders`
+Pixie:  
+`$ cd data/shaders`  
 `$ sdrc *.sl`
 
 The simulation output can get considerably large, so there is an option to
 compile with compressed output (gzip files, requires libz). Pixie can directly
-read it, however simulation performance suffers quite a bit.
+read it, however simulation performance suffers quite a bit.  
 `$ make clean && make COMPRESSION=1`
 
 
 ##### Script Dependencies #####
-* render script: Renderman compliant renderer (eg Pixie
-  http://www.renderpixie.com/), ImageMagick for surface rendering (spatial and
-  temporal blurring steps)
+* render script: Renderman compliant renderer (eg Pixie), ImageMagick for
+  surface rendering (spatial and temporal blurring steps)
 * video script: ffmpeg
 
 
@@ -55,17 +54,17 @@ field (see include/simulation.h for documentation of the config parameters).
 The output is a RenderMan Scene File (RIB), which can be rendered with a
 RenderMan compliant renderer. We used Pixie (http://www.renderpixie.com).
 
-Simulator output:
-`#P: 13656, T:  1.463/10.000, steps:  1.8/s (549ms), avg_nei: 41, nei_upd:50% temp:[617 1000] avg_it:12`
+Simulator output:  
+`#P: 13656, T:  1.463/10.000, steps:  1.8/s (549ms), avg_nei: 41, nei_upd:50% temp:[617 1000] avg_it:12`  
 With current number of particles, current and total simulation time, simulation
 steps per second and average time of one timestep, average number of neighbors,
 percentage of steps where neighbor lists needed to be updated, [min max]
 temperature and average number of iterations for PCI loop.
 
 ##### Example #####
-`$ ./simulator -c config/grid_simple.xml -f 100`
-`$ ./scripts/render.sh config/grid_simple.xml -r <pixie_bin>/rndr`
-`$ ./scripts/video.sh output/rendering/grid_simple --fps 20`
+`$ ./simulator -c config/grid_simple.xml -f 100`  
+`$ ./scripts/render.sh config/grid_simple.xml -r <pixie_bin>/rndr`  
+`$ ./scripts/video.sh output/rendering/grid_simple --fps 20`  
 
 
 ##### Configuration #####
@@ -116,6 +115,6 @@ Parts of the implementation are based on these papers:
 * Predictive-Corrective Incompressible SPH, B. Solenthaler et al., 2009
 
 
-Copyright 2014 Hans Hardmeier <hanshardmeier@gmail.com>
+Copyright 2014 Hans Hardmeier <hanshardmeier@gmail.com>  
 Copyright 2014 Beat Küng <beat-kueng@gmx.net>
 
