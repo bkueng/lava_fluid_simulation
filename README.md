@@ -4,6 +4,9 @@ This is a 3D lava particle simulator based on Smoothed-Particle Hydrodynamics
 (PCISPH).
 It is a project developed in the ETH course Physically-based Simulation.
 
+![rendering1](output/grid_huge_2_hd.png)
+![rendering2](output/volcano_3_hd.png)
+
 
 #### Features ####
 * Predictive-Corrective Incompressible SPH simulation based on 3D grid and
@@ -19,7 +22,6 @@ It is a project developed in the ETH course Physically-based Simulation.
     or shader)
   * Spheres or oriented disks
   * Surface rendering using disk splatting
-
 
 #### Compilation ####
 There are no external dependencies for the simulator. The code works under Linux
