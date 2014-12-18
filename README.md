@@ -7,6 +7,10 @@ It is a project developed in the ETH course Physically-based Simulation.
 ![rendering1](output/grid_huge_2_hd.png)
 ![rendering2](output/volcano_3_hd.png)
 
+#### Videos ####
+* https://www.youtube.com/watch?v=K2ffZptTYHk
+* https://www.youtube.com/watch?v=teAVuc_flAM
+
 
 #### Features ####
 * Predictive-Corrective Incompressible SPH simulation based on 3D grid and
